@@ -41,132 +41,142 @@ GM_addStyle(`
 #fb-v6-panel {
   position: fixed; bottom: 16px; right: 16px;
   width: ${CONFIG.panelWidth}px; max-height: 88vh;
-  background: #0d1117; color: #c9d1d9;
-  border: 1px solid #30363d; border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  background: #F0F8FF; color: #3A5A7A;
+  border: 2px solid #87CEEB; border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(135,206,235,0.3);
   z-index: 999999; font: 13px -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
   display: flex; flex-direction: column; overflow: hidden;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition: transform 0.25s ease, opacity 0.25s ease;
 }
 #fb-v6-panel.hidden { opacity: 0; pointer-events: none; }
 #fb-v6-panel .hdr {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 14px;
-  background: #161b22; border-bottom: 1px solid #30363d;
+  padding: 10px 16px;
+  background: linear-gradient(90deg, #87CEEB, #A8D8EA, #87CEEB);
+  border-bottom: 2px solid #6BB5D9;
+  border-radius: 16px 16px 0 0;
   cursor: move; user-select: none; flex-shrink: 0;
 }
-#fb-v6-panel .hdr .ttl { font-weight: 700; font-size: 14px; color: #58a6ff; }
-#fb-v6-panel .hdr .ttl small { font-weight: 400; font-size: 10px; color: #8b949e; }
-#fb-v6-panel .hdr .btns button {
-  background: #21262d; border: 1px solid #30363d; color: #8b949e;
-  cursor: pointer; font-size: 13px; padding: 2px 8px; border-radius: 6px; margin-left: 4px;
+#fb-v6-panel .hdr .ttl { font-weight: 700; font-size: 14px; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+#fb-v6-panel .hdr .ttl small { font-weight: 400; font-size: 10px; color: rgba(255,255,255,0.85); }
+#fb-v6-panel .hdr .author {
+  font-weight: 400; font-size: 10px; color: rgba(255,255,255,0.85);
+  display: block; margin-top: 1px;
 }
-#fb-v6-panel .hdr .btns button:hover { background: #30363d; color: #c9d1d9; }
+#fb-v6-panel .hdr .btns button {
+  background: rgba(255,255,255,0.3); border: none; color: white;
+  cursor: pointer; font-size: 14px; padding: 2px 8px; border-radius: 8px; margin-left: 4px;
+  transition: all 0.2s;
+}
+#fb-v6-panel .hdr .btns button:hover { background: rgba(255,255,255,0.55); }
 #fb-v6-panel .body { overflow-y: auto; padding: 10px 14px; flex: 1; }
 #fb-v6-panel .tabs {
-  display: flex; gap: 2px; margin-bottom: 10px;
-  border-bottom: 1px solid #21262d; padding-bottom: 6px; flex-wrap: wrap; flex-shrink: 0;
+  display: flex; gap: 3px; margin-bottom: 10px;
+  border-bottom: 2px solid #D4EDFB; padding-bottom: 6px; flex-wrap: wrap; flex-shrink: 0;
 }
 #fb-v6-panel .tabs button {
-  background: none; border: none; color: #8b949e; cursor: pointer;
-  padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600;
-  transition: all 0.15s; font-family: inherit;
+  background: none; border: none; color: #8AB4D6; cursor: pointer;
+  padding: 4px 9px; border-radius: 10px; font-size: 11px; font-weight: 600;
+  transition: all 0.2s; font-family: inherit;
 }
-#fb-v6-panel .tabs button.act { background: #1f6feb33; color: #58a6ff; }
-#fb-v6-panel .tabs button:hover:not(.act) { background: #21262d; }
+#fb-v6-panel .tabs button.act { background: #87CEEB; color: white; box-shadow: 0 2px 6px rgba(135,206,235,0.3); }
+#fb-v6-panel .tabs button:hover:not(.act) { background: #D4EDFB; }
 #fb-v6-panel .card {
-  background: #161b22; border: 1px solid #30363d;
-  border-radius: 10px; padding: 12px; margin-bottom: 8px;
+  background: white; border: 1px solid #D4EDFB;
+  border-radius: 14px; padding: 12px; margin-bottom: 8px;
 }
 #fb-v6-panel .card h3 {
-  font-size: 12px; color: #8b949e; font-weight: 600;
-  margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+  font-size: 11px; color: #8AB4D6; font-weight: 600;
+  margin-bottom: 8px; letter-spacing: 0.3px;
 }
 #fb-v6-panel .row {
-  display: flex; padding: 5px 0; border-bottom: 1px solid #21262d;
+  display: flex; padding: 5px 0; border-bottom: 1px solid #F0F8FF;
   font-size: 12px; align-items: flex-start;
 }
 #fb-v6-panel .row:last-child { border-bottom: none; }
-#fb-v6-panel .row .lbl { color: #8b949e; min-width: 75px; flex-shrink: 0; }
-#fb-v6-panel .row .val { color: #c9d1d9; word-break: break-word; }
-#fb-v6-panel .row .val.ph { color: #3fb950; font-family: monospace; font-size: 13px; }
-#fb-v6-panel .row .val.uid { color: #58a6ff; font-family: monospace; }
+#fb-v6-panel .row .lbl { color: #8AB4D6; min-width: 70px; flex-shrink: 0; font-size: 11px; }
+#fb-v6-panel .row .val { color: #3A5A7A; word-break: break-word; }
+#fb-v6-panel .row .val.ph { color: #7BC99A; font-family: monospace; font-size: 13px; }
+#fb-v6-panel .row .val.uid { color: #5BA3C9; font-family: monospace; }
 #fb-v6-panel .row .cpy {
-  background: none; border: none; color: #484f58; cursor: pointer;
-  font-size: 11px; padding: 0 4px; flex-shrink: 0; margin-left: auto;
+  background: none; border: none; color: #D4EDFB; cursor: pointer;
+  font-size: 12px; padding: 0 4px; flex-shrink: 0; margin-left: auto; transition: all 0.2s;
 }
-#fb-v6-panel .row .cpy:hover { color: #58a6ff; }
+#fb-v6-panel .row .cpy:hover { color: #87CEEB; }
 #fb-v6-panel .avatar {
   width: 56px; height: 56px; border-radius: 50%; object-fit: cover;
-  border: 2px solid #30363d; cursor: pointer; flex-shrink: 0;
+  border: 3px solid #87CEEB; cursor: pointer; flex-shrink: 0; transition: all 0.2s;
 }
-#fb-v6-panel .avatar:hover { border-color: #58a6ff; }
+#fb-v6-panel .avatar:hover { border-color: #5BA3C9; transform: scale(1.05); }
 #fb-v6-panel .profile-top {
   display: flex; gap: 12px; align-items: center; margin-bottom: 10px;
 }
 #fb-v6-panel .profile-top .info { flex: 1; }
-#fb-v6-panel .profile-top .info .name { font-size: 16px; font-weight: 700; color: #f0f6fc; }
-#fb-v6-panel .profile-top .info .sub { font-size: 11px; color: #8b949e; margin-top: 2px; }
+#fb-v6-panel .profile-top .info .name { font-size: 16px; font-weight: 700; color: #3A5A7A; }
+#fb-v6-panel .profile-top .info .sub { font-size: 11px; color: #8AB4D6; margin-top: 2px; }
 #fb-v6-panel .tag {
-  display: inline-block; background: #1f6feb22; color: #58a6ff;
+  display: inline-block; background: #E8F4FD; color: #5BA3C9;
   padding: 1px 8px; border-radius: 8px; font-size: 11px;
-  border: 1px solid #1f6feb33; margin: 1px;
+  border: 1px solid #C5E5F7; margin: 1px;
 }
-#fb-v6-panel .tag.grn { background: #23863622; color: #3fb950; border-color: #23863644; }
-#fb-v6-panel .tag.ylw { background: #d2992222; color: #d29922; border-color: #d2992244; }
-#fb-v6-panel .tag.red { background: #da363322; color: #f85149; border-color: #da363344; }
+#fb-v6-panel .tag.grn { background: #E6F9ED; color: #3FB950; border-color: #B8E6C8; }
+#fb-v6-panel .tag.ylw { background: #FFF8E1; color: #D29922; border-color: #FFE082; }
+#fb-v6-panel .tag.red { background: #FFEBEE; color: #F85149; border-color: #FFCDD2; }
 #fb-v6-panel .friend-item, #fb-v6-panel .post-item {
-  padding: 6px 8px; border-bottom: 1px solid #21262d; font-size: 12px;
+  padding: 6px 8px; border-bottom: 1px solid #F0F8FF; font-size: 12px;
 }
 #fb-v6-panel .friend-item:last-child, #fb-v6-panel .post-item:last-child { border-bottom: none; }
-#fb-v6-panel .friend-item .fn { color: #c9d1d9; }
-#fb-v6-panel .friend-item .fl { color: #8b949e; font-size: 10px; }
-#fb-v6-panel .post-item .pt { color: #c9d1d9; }
-#fb-v6-panel .post-item .pm { color: #8b949e; font-size: 10px; margin-top: 2px; }
+#fb-v6-panel .friend-item .fn { color: #3A5A7A; }
+#fb-v6-panel .friend-item .fl { color: #8AB4D6; font-size: 10px; }
+#fb-v6-panel .post-item .pt { color: #3A5A7A; }
+#fb-v6-panel .post-item .pm { color: #8AB4D6; font-size: 10px; margin-top: 2px; }
 #fb-v6-panel .bot-bar {
   display: flex; gap: 4px; padding: 8px 14px;
-  border-top: 1px solid #21262d; flex-shrink: 0;
+  border-top: 2px solid #D4EDFB; flex-shrink: 0;
 }
 #fb-v6-panel .bot-bar button {
-  flex: 1; padding: 6px 8px; border-radius: 8px; border: 1px solid #30363d;
-  background: #21262d; color: #c9d1d9; cursor: pointer; font-size: 11px;
-  font-family: inherit; font-weight: 600; transition: all 0.15s;
+  flex: 1; padding: 6px 8px; border-radius: 10px; border: 1px solid #D4EDFB;
+  background: white; color: #5BA3C9; cursor: pointer; font-size: 11px;
+  font-family: inherit; font-weight: 600; transition: all 0.2s;
 }
-#fb-v6-panel .bot-bar button:hover { background: #30363d; }
-#fb-v6-panel .bot-bar button.pri { background: #1f6feb33; border-color: #58a6ff; color: #58a6ff; }
-#fb-v6-panel .bot-bar button.pri:hover { background: #1f6feb55; }
-#fb-v6-panel .bot-bar button.del { border-color: #da3633; color: #f85149; }
-#fb-v6-panel .bot-bar button.del:hover { background: #da363322; }
-#fb-v6-panel .st { font-size: 11px; color: #484f58; text-align: center; padding: 4px 0 0; flex-shrink: 0; }
-#fb-v6-panel .emp { color: #484f58; text-align: center; padding: 30px 20px; font-size: 12px; }
+#fb-v6-panel .bot-bar button:hover { background: #87CEEB; color: white; border-color: #87CEEB; }
+#fb-v6-panel .bot-bar button.pri { background: #87CEEB; border-color: #87CEEB; color: white; }
+#fb-v6-panel .bot-bar button.pri:hover { background: #6BB5D9; }
+#fb-v6-panel .bot-bar button.del { border-color: #E88B8B; color: #E88B8B; }
+#fb-v6-panel .bot-bar button.del:hover { background: #E88B8B; color: white; }
+#fb-v6-panel .st { font-size: 11px; color: #8AB4D6; text-align: center; padding: 4px 0 0; flex-shrink: 0; }
+#fb-v6-panel .emp { color: #8AB4D6; text-align: center; padding: 30px 20px; font-size: 12px; }
 #fb-v6-panel .emp span { font-size: 32px; display: block; margin-bottom: 8px; }
-#fb-v6-panel .badge { font-size: 10px; color: #8b949e; }
+#fb-v6-panel .badge { font-size: 10px; color: #8AB4D6; }
 #fb-v6-panel .pill {
-  display: inline-block; background: #21262d; padding: 2px 10px;
-  border-radius: 10px; font-size: 11px; color: #8b949e; margin: 2px;
+  display: inline-block; background: white; padding: 2px 10px;
+  border-radius: 10px; font-size: 11px; color: #8AB4D6; margin: 2px;
+  border: 1px solid #D4EDFB;
 }
-#fb-v6-panel .pill.act { background: #1f6feb33; color: #58a6ff; border: 1px solid #1f6feb44; }
+#fb-v6-panel .pill.act { background: #E8F4FD; color: #5BA3C9; border: 1px solid #87CEEB; }
 #fb-v6-panel .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 #fb-v6-panel .grid-2 button {
-  background: #21262d; border: 1px solid #30363d; border-radius: 8px;
-  color: #8b949e; cursor: pointer; padding: 6px; font-size: 11px;
-  text-align: center; transition: all 0.15s; font-family: inherit;
+  background: white; border: 1px solid #D4EDFB; border-radius: 8px;
+  color: #5BA3C9; cursor: pointer; padding: 6px; font-size: 11px;
+  text-align: center; transition: all 0.2s; font-family: inherit;
 }
-#fb-v6-panel .grid-2 button:hover { background: #30363d; color: #c9d1d9; }
-#fb-v6-panel .ll { color: #58a6ff; text-decoration: none; }
+#fb-v6-panel .grid-2 button:hover { background: #87CEEB; color: white; border-color: #87CEEB; }
+#fb-v6-panel .ll { color: #5BA3C9; text-decoration: none; }
 #fb-v6-panel .ll:hover { text-decoration: underline; }
 #fb-v6-panel .sc { overflow-x: auto; white-space: nowrap; padding: 4px 0; }
 #fb-v6-panel .sc::-webkit-scrollbar { height: 4px; }
-#fb-v6-panel .sc::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+#fb-v6-panel .sc::-webkit-scrollbar-thumb { background: #D4EDFB; border-radius: 4px; }
 #fb-v6-global-btn {
   position: fixed; bottom: 72px; right: 16px;
-  width: 44px; height: 44px; border-radius: 50%;
-  background: #161b22; border: 1px solid #30363d; color: #58a6ff;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: linear-gradient(135deg, #87CEEB, #A8D8EA);
+  border: 2px solid white; color: white;
   font-size: 20px; cursor: pointer; z-index: 999998;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.15s;
+  box-shadow: 0 4px 16px rgba(135,206,235,0.4);
+  transition: all 0.2s;
   display: flex; align-items: center; justify-content: center;
 }
-#fb-v6-global-btn:hover { background: #1f6feb22; border-color: #58a6ff; transform: scale(1.05); }
+#fb-v6-global-btn:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(135,206,235,0.5); }
 `);
 
 // ============================================================
@@ -630,7 +640,7 @@ function htmlPanel(data) {
 
   return `
 <div class="hdr">
-  <span class="ttl">🎯 目标画像 <small>v6 · ${data.name || '未识别'}</small></span>
+  <span class="ttl">🎯 目标画像 <small>v6 · ${data.name || '未识别'}</small><span class="author">✨ By.阿趣 🎀</span></span>
   <span class="btns">
     <button id="v6-refresh">🔄</button>
     <button id="v6-close">✕</button>
