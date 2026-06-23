@@ -1,57 +1,71 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FB OSINT Companion</title>
+  <title>🌸 FB 信息助手</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; background: #1c1e21; color: #e4e6eb; line-height: 1.6; }
-    a { color: #2d88ff; }
-    h1 { font-size: 28px; }
-    .install-btn { display: inline-block; background: #2d88ff; color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; margin: 10px 0; }
-    .install-btn:hover { background: #1a6fdc; }
-    .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 20px 0; }
-    .feature-grid .item { background: #242526; padding: 8px 12px; border-radius: 6px; font-size: 13px; }
-    code { background: #242526; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
-    pre { background: #242526; padding: 12px; border-radius: 6px; overflow-x: auto; }
+    body { font-family: -apple-system, 'Noto Sans SC', sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; background: #E8F4FD; color: #4A6B8A; line-height: 1.8; }
+    a { color: #5BA3C9; }
+    h1 { font-size: 28px; text-align: center; }
+    .install-btn { display: inline-block; background: linear-gradient(135deg, #87CEEB, #B0E0E6); color: white; padding: 14px 40px; border-radius: 30px; text-decoration: none; font-weight: 700; font-size: 18px; margin: 16px 0; box-shadow: 0 4px 16px rgba(135,206,235,0.3); }
+    .install-btn:hover { box-shadow: 0 6px 24px rgba(135,206,235,0.4); }
+    .card { background: white; border-radius: 20px; padding: 20px; margin: 16px 0; border: 1px solid #C5E5F7; box-shadow: 0 2px 8px rgba(135,206,235,0.15); }
+    code { background: #E8F4FD; padding: 2px 8px; border-radius: 6px; font-size: 13px; color: #5BA3C9; }
+    .center { text-align: center; }
+    .author { text-align: center; font-size: 14px; color: #8AB4D6; }
   </style>
 </head>
 <body>
-  <h1>🕵️ FB OSINT Companion</h1>
-  <p>Tampermonkey userscript for authorized penetration testing OSINT on Facebook.</p>
-  <a class="install-btn" href="fb-osint-helper.user.js">📦 Install Userscript</a>
-  <p><small>Requires <a href="https://www.tampermonkey.net/">Tampermonkey</a> installed first.</small></p>
-
-  <h2>Features</h2>
-  <div class="feature-grid">
-    <div class="item">👤 Profile scraping</div>
-    <div class="item">🔑 Auto keyword extraction</div>
-    <div class="item">🎯 OSINT pivot links</div>
-    <div class="item">🤝 Mutual friends + popup scrape</div>
-    <div class="item">👥 Group member batch scan</div>
-    <div class="item">📰 Timeline post extraction</div>
-    <div class="item">📸 Photo date/location scan</div>
-    <div class="item">📞 Contact info detection</div>
-    <div class="item">📅 Event extraction</div>
-    <div class="item">🔗 Network collection (PYMK + groups)</div>
-    <div class="item">⚠️ Profile change tracking</div>
-    <div class="item">💬 Messenger notepad + templates</div>
+  <div class="center">
+    <h1>🌸 FB 信息助手</h1>
+    <p class="author">By.阿趣 🎀</p>
+    <a class="install-btn" href="fb-osint-helper.user.js">📦 安装脚本</a>
+    <p><small>需要先安装 <a href="https://www.tampermonkey.net/">Tampermonkey</a> 浏览器扩展</small></p>
   </div>
 
-  <h2>Installation</h2>
-  <ol>
-    <li>Install <a href="https://www.tampermonkey.net/">Tampermonkey</a> for your browser</li>
-    <li>Click <strong>Install Userscript</strong> above</li>
-    <li>Tampermonkey will prompt — click <strong>Install</strong></li>
-  </ol>
+  <div class="card">
+    <h2>✨ 功能一览</h2>
+    <ul>
+      <li>👤 自动提取个人信息（姓名、位置、工作、教育、感情状态、生日、好友数）</li>
+      <li>🔑 关键词提取（电话、邮箱、链接、年龄、地址、兴趣词）</li>
+      <li>🎯 一键搜索（谷歌、领英、GitHub、Instagram、Pipl 等 12 个 OSINT 网站）</li>
+      <li>🤝 共同好友采集（高亮显示 + 展开弹窗批量抓取 + CSV 导出）</li>
+      <li>👥 群组成员批量扫描（自动滚动 + 导出 CSV）</li>
+      <li>📰 帖子/照片/活动信息提取</li>
+      <li>📞 联系方式和关联账号检测</li>
+      <li>⚠️ 主页信息变更追踪</li>
+      <li>💬 Messenger 聊天记事板 + 自动关键词检测 + 话术模板</li>
+      <li>📸 头像下载 + 反向图片搜索</li>
+    </ul>
+  </div>
 
-  <h2>Usage</h2>
-  <p>Visit any Facebook profile page — the panel auto-opens. Use <code>Ctrl+Shift+P</code> to toggle, <code>Ctrl+Shift+N</code> for Messenger notepad.</p>
+  <div class="card">
+    <h2>📥 安装方法</h2>
+    <ol>
+      <li>安装 <a href="https://www.tampermonkey.net/">Tampermonkey</a></li>
+      <li>点击上面的 <strong>安装脚本</strong> 按钮</li>
+      <li>Tampermonkey 弹出提示 → 点击 <strong>安装</strong></li>
+    </ol>
+    <p>或者复制安装链接：<br><code>https://github.com/Aqu399/fb-osint-companion/raw/main/fb-osint-helper.user.js</code></p>
+  </div>
 
-  <h2>Disclaimer</h2>
-  <p>This tool is for <strong>authorized security testing only</strong>. All data is stored locally in your browser.</p>
+  <div class="card">
+    <h2>🎮 快捷键</h2>
+    <ul>
+      <li><code>Ctrl+Shift+P</code> → 打开/关闭面板</li>
+      <li><code>Ctrl+Shift+N</code> → 打开/关闭记事板</li>
+      <li>点击 <strong>🌸</strong> 浮动按钮 → 面板</li>
+      <li><code>Ctrl</code>+点击 <strong>🌸</strong> → 记事板</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>⚠️ 免责声明</h2>
+    <p>本工具仅供 <strong>授权安全测试</strong> 使用。所有数据仅存储在本地浏览器中，不会发送到任何外部服务器。</p>
+  </div>
 
   <hr>
-  <p style="color:#8a8d91;font-size:12px;">github.com/Aqu399/fb-osint-companion</p>
+  <p class="author">github.com/Aqu399/fb-osint-companion | By.阿趣 🎀</p>
 </body>
 </html>

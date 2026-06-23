@@ -1,59 +1,47 @@
-# FB OSINT Companion 🕵️
+# 🌸 FB 信息助手
 
-Tampermonkey userscript for **authorized penetration testing** OSINT on Facebook.
+Tampermonkey 用户脚本 — Facebook 个人信息收集辅助工具（授权渗透测试专用）
 
-## Features
+**By.阿趣 🎀**
 
-| Tab | Function |
-|-----|----------|
-| 👤 Profile | Name, location, work, education, relationship, birthday, friends, followers, bio |
-| 🔑 Keys | Auto-extracted phone, email, URL, US state, age, interest keywords |
-| 🎯 Pivot | One-click OSINT searches: Google, LinkedIn, Pipl, Dehashed, HIBP, GitHub, Instagram, X, Phone, Email, Graph API |
-| 🤝 Mutual | Mutual friends display + Highlight on page + Expand popup scraper |
-| 👥 Group | Batch scan visible group members → auto export CSV |
-| 📰 Posts | Extract visible timeline posts with timestamps and locations |
-| 📸 Photos | Scan photo dates/locations from visible photos |
-| 📞 Contacts | Detect WhatsApp, Phone, Website, Email from contact info section |
-| 📅 Events | Extract event names, dates, locations |
-| 🔗 Network | Common groups + Friend suggestions (PYMK) collection |
-| ⚠️ Changes | Profile change tracking across sessions |
+## ✨ 功能
 
-### Messenger Board (Ctrl+Shift+N)
-- Manual note-taking with category tags
-- Auto keyword detection from chat messages (phone, email, age, address, URL)
-- 6 built-in social engineering templates (Warm Interest, Playful Direct, Mystery Soft, Cold Salvage, Defense scripts)
+| 标签 | 功能 |
+|------|------|
+| 👤 主页 | 姓名、位置、工作、教育、感情、生日、好友数、简介 |
+| 🔑 关键词 | 自动提取电话、邮箱、链接、年龄、州、兴趣词 |
+| 🎯 搜索 | 一键跳转 Google / LinkedIn / Pipl / Dehashed / HIBP / GitHub / IG / X 等 |
+| 🤝 共同好友 | 展示 + 页面高亮 + 展开弹窗批量采集 |
+| 👥 群组 | 自动滚动扫描群组成员 → CSV 导出 |
+| 📰 帖子 | 提取可见帖子内容 + 位置 + 时间 |
+| 📸 照片 | 提取照片日期信息 |
+| 📞 联系方式 | WhatsApp / 电话 / 网站 / 邮箱 |
+| 📅 活动 | 提取活动名称、日期、地点 |
+| 🔗 社交圈 | 共同群组 + 可能认识的人推荐 |
+| ⚠️ 变更 | 追踪主页信息变化 |
 
-### Quick Actions
-- **Avatar**: Download HD + reverse image search (Google, TinEye, Yandex)
-- **FB UID**: 6-method extraction + Graph API endpoint
-- **Mutual Friends**: Click to expand popup and scrape all names
-- **Group Scanner**: Auto-scroll + collect + CSV export
+### 💬 聊天记事板
+- 手动记录 + 分类标签
+- 聊天内容自动检测（电话、邮箱、年龄、地址、链接）
+- 内置 6 条话术模板（英文）
 
-### Keyboard Shortcuts
-| Keys | Action |
-|------|--------|
-| Ctrl+Shift+P | Toggle Profile Panel |
-| Ctrl+Shift+N | Toggle Messenger Notepad |
+### 🖼️ 头像
+- 下载高清头像
+- 一键反向搜索（Google / TinEye / Yandex）
 
-## Installation
+## 📥 安装
 
-1. Install [Tampermonkey](https://www.tampermonkey.net/) for your browser
-2. Open [fb-osint-helper.user.js](fb-osint-helper.user.js)
-3. Tampermonkey will prompt to install — click **Install**
+1. 安装 [Tampermonkey](https://www.tampermonkey.net/)
+2. 打开：https://github.com/Aqu399/fb-osint-companion/raw/main/fb-osint-helper.user.js
+3. 点击安装
 
-Or manually: Tampermonkey Dashboard → Utilities → Import from file.
+## 🎮 快捷键
 
-## Requirements
+| 按键 | 功能 |
+|------|------|
+| Ctrl+Shift+P | 面板开关 |
+| Ctrl+Shift+N | 记事板开关 |
 
-- A Facebook account (for profile/messenger features)
-- **This tool is for authorized security testing only**
+## ⚠️
 
-## Data Storage
-
-All data is stored **locally** in Tampermonkey's storage (`GM_setValue`). Nothing is sent to any external server. Exports are manual (JSON/CSV).
-
-## Notes
-
-- FB DOM structure changes frequently; some selectors may break and need updating
-- Mutual friend expansion requires clicking the link and waiting for the popup overlay
-- Group scanning scrolls the page automatically; the page must be scrolled to load members
+本工具仅供**授权安全测试**使用。数据仅存储在本地。
