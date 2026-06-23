@@ -1182,7 +1182,7 @@
       {name:'🎯 直球搭讪',text:'Okay this is going to sound insane, but I\'m just gonna go for it. I saw your profile and something told me I\'d regret it if I didn\'t say hi. So... hi 🙃 I\'m Olivia.'},
       {name:'🎯 温柔神秘',text:'I know this is out of the blue, but I\'ve been having one of those weeks where you just feel like taking a chance. So... hi. I\'m Olivia. Tell me one good thing about your day? 😊'},
       {name:'❄️ 冷场挽救',text:'Okay I\'ll take the silence as a sign 😂 No pressure. Hope your day gets better ✌️'},
-      {name:'🛡️ 被质疑机器人',text:'😂 I promise I\'m real! Just a regular human who took a shot at messaging a stranger. I can send a voice note if you need proof? 🤷‍♀️'},
+      {name:'🛡️ 被质疑机器人',text:'😂 I promise I\'m real! Just a regular human who took a shot at messaging a stranger. I can send a voice note if you need proof? 🤷♀️'},
       {name:'🛡️ "为什么找我"',text:'Honestly? I just liked your vibe. Your profile gave off normal-human-energy which is surprisingly rare 😂'},
     ];
     const d=document.createElement('div'); d.id='fb-osint-notepad';
