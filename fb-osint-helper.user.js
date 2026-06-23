@@ -413,39 +413,51 @@
         data.uid = extractFBUID();
 
     // ====== 全面文本扫描 ======
-    const allText = document.body.innerText;
+        // ====== 逐元素扫描文本（兼容各种FB布局）======
+    // 收集页面上所有可见元素的文本
+    const allElems = document.querySelectorAll('span, div[data-pagelet] span, div[dir="auto"], h1, h2, h3, a[role="link"]');
+    let fullText = '';
+    const seenTexts = new Set();
+    for (const el of allElems) {
+      const t = el.textContent.trim();
+      if (t && t.length > 1 && t.length < 200 && !seenTexts.has(t)) {
+        seenTexts.add(t);
+        fullText += t + '\n';
+      }
+    }
+    // Also try innerText as fallback
+    if (fullText.length < 100) fullText = document.body.innerText;
+    const pt = fullText;
 
-    const li = allText.match(/Lives in\s+([^\n,]+)/i);
+    const li = pt.match(/Lives in\s+([^\n,]+)/i);
     if (li) data.location = li[1].trim();
 
-    const fm = allText.match(/(?:^|\n)From\s+([^\n,]+)/i);
+    const fm = pt.match(/(?:^|\n)From\s+([^\n,]+)/i);
     if (fm) data.hometown = fm[1].trim();
 
-    const wk = allText.match(/Works at\s+([^\n,]+)/i);
+    const wk = pt.match(/Works at\s+([^\n,]+)/i);
     if (wk) data.work = wk[1].trim();
 
-    const ed = allText.match(/(?:Studied at|Went to)\s+([^\n,]+)/i);
+    const ed = pt.match(/(?:Studied at|Went to)\s+([^\n,]+)/i);
     if (ed) data.education = ed[1].trim();
 
-    const relStatuses = ['Single','In a relationship','Married','Engaged','Divorced','Widowed',"It's complicated"];
+    const relStatuses = ['Single', 'In a relationship', 'Married', 'Engaged', 'Divorced', 'Widowed', "It's complicated"];
     for (const rs of relStatuses) {
-      if (allText.includes(rs)) { data.relationship = rs; break; }
+      if (pt.includes(rs)) { data.relationship = rs; break; }
     }
 
-    const fc = allText.match(/([\d,]+)\s*(?:friends?|mutual friends?)/i);
+    const fc = pt.match(/([\d,]+)\s*(?:friends?|mutual friends?)/i);
     if (fc) data.friends = fc[1];
 
-    const bd = allText.match(/Birthday\s*:?\s*(\w+\s+\d{1,2}(?:,\s*\d{4})?)/i);
+    const bd = pt.match(/Birthday\s*:?\s*(\w+\s+\d{1,2}(?:,\s*\d{4})?)/i);
     if (bd) data.birthday = bd[1];
     if (!data.birthday) {
-      const bd2 = allText.match(/\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:,\s*\d{4})?\b/);
+      const bd2 = pt.match(/\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:,\s*\d{4})?\b/);
       if (bd2) data.birthday = bd2[0];
     }
 
-    const fol = allText.match(/([\d.,KkMmbB]+)\s*(?:follower|followers)/i);
-    if (fol) data.followers = fol[1];
-
-    // Bio from page text
+    const fol = pt.match(/([\d.,KkMmbB]+)\s*(?:follower|followers)/i);
+    if (fol) data.followers = fol[1];    // Bio from page text
     const sections = document.body.innerText.split(/\n{2,}/);
     for (const sec of sections) {
       const t = sec.trim();
@@ -1537,7 +1549,8 @@
     observer.observe(document.body,{childList:true,subtree:true});
 
     if(window.location.href.match(/facebook\.com\/(?:[^/?]+\/?|profile\.php)/)&&!window.location.href.includes('messages/')){
-      setTimeout(()=>{const d=scrapeProfile();if(d.name||d.location)renderPanel(d);},2500);
+      setTimeout(()=>{const d=scrapeProfile();if(d.name&&!panelVisible)renderPanel(d);},8000);
+      setTimeout(()=>{const d=scrapeProfile();if(d.name||d.location)renderPanel(d);},4000);
     }
     console.log('🌸 FB 信息助手 v5.0 — By.阿趣 🎀');
     console.log('📌 Ctrl+Shift+P 面板 | Ctrl+Shift+N 记事板');
