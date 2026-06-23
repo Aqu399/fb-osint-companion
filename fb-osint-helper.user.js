@@ -471,6 +471,130 @@
     return data;
   }
 
+
+  // ====== 提取目标的好友列表 ======
+  function extractFriendList() {
+    const friends = [];
+    const seen = new Set();
+
+    // 方法1: 从页面上 "Friends" 区域提取
+    // FB 好友列表通常在个人主页的 friends 卡片里
+    // 寻找好友名字链接
+    const friendLinks = document.querySelectorAll(
+      'a[href*="/friends/"][href*="profile.php"], ' +
+      'a[href*="/user/"][role="link"], ' +
+      'div[data-pagelet="Profile"] a[href*="facebook.com/"][role="link"], ' +
+      'a[aria-label*="friend"], ' +
+      // Friends section items
+      'div[class*="x1n2onr6"] div[class*="x1n2onr6"] a[href*="facebook.com/"]:not([href*="groups/"]):not([href*="photos/"]):not([href*="videos/"]):not([href*="messages/"]):not([href*="events/"])'
+    );
+
+    for (const el of friendLinks) {
+      const name = el.textContent.trim();
+      const href = el.getAttribute('href') || '';
+      // Only take links that look like person profiles
+      if (name && name.length > 1 && name.length < 40
+        && href.match(/facebook\.com\/(?:profile\.php\?id=\d+|[^/?]+)/)
+        && !href.includes('friends/') && !href.includes('photos/')) {
+        const fullUrl = href.startsWith('/') ? 'https://www.facebook.com' + href : href;
+        if (!seen.has(fullUrl)) {
+          seen.add(fullUrl);
+          // Also try to get avatar
+          const img = el.querySelector('img');
+          const avatar = img ? (img.src || '') : '';
+          friends.push({ name, url: fullUrl, avatar: avatar.slice(0,100) });
+        }
+      }
+    }
+
+    // 方法2: 从页面文本中找 "X friends" 下面的名字
+    if (friends.length === 0) {
+      const pt = document.body.innerText;
+      // Try to find friend names in the Friends section
+      const sections = pt.split(/\n{2,}/);
+      for (const sec of sections) {
+        if (sec.toLowerCase().includes('friends') && sec.length > 50) {
+          const lines = sec.split('\n').filter(l => l.trim().length > 0 && l.trim().length < 30);
+          for (const line of lines.slice(0, 30)) {
+            const name = line.trim();
+            if (name.length > 1 && name.length < 30
+              && !name.match(/^\d+$/) && !name.includes('friends')
+              && !name.includes('Friend') && !name.includes('See all')) {
+              if (!seen.has(name)) {
+                seen.add(name);
+                friends.push({ name, url: '', avatar: '' });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return friends;
+  }
+
+  // ====== 提取所有可见的个人详情 ======
+  function extractAllDetails() {
+    const details = [];
+    const pt = document.body.innerText;
+    const seen = new Set();
+
+    // 预定义的字段模式
+    const patterns = [
+      { label: '所在地', regex: /Lives in\s+([^\n,]+)/i },
+      { label: '家乡', regex: /(?:^|\n)From\s+([^\n,]+)/i },
+      { label: '工作', regex: /Works at\s+([^\n,]+)/i },
+      { label: '教育', regex: /(?:Studied at|Went to)\s+([^\n,]+)/i },
+      { label: '生日', regex: /Birthday\s*:?\s*(\w+\s+\d{1,2}(?:,\s*\d{4})?)/i },
+      { label: '电话', regex: /(?:(?:\+|1)?\s*\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/g },
+      { label: '邮箱', regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g },
+      { label: '网站', regex: /(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?/g },
+      { label: '感情状态', regex: /(?:Single|In a relationship|Married|Engaged|Divorced|Widowed)/gi },
+    ];
+
+    for (const { label, regex } of patterns) {
+      let m;
+      const isGlobal = regex.toString().includes('g');
+      if (isGlobal) {
+        while ((m = regex.exec(pt)) !== null) {
+          const val = m[1] || m[0];
+          if (val && !seen.has(label+val)) {
+            seen.add(label+val);
+            details.push({ label, value: val.trim() });
+          }
+        }
+      } else {
+        m = regex.exec(pt);
+        if (m) {
+          const val = m[1] || m[0];
+          if (val && !seen.has(label+val)) {
+            seen.add(label+val);
+            details.push({ label, value: val.trim() });
+          }
+        }
+      }
+    }
+
+    // 关联账号
+    const accPatterns = [
+      { label: 'Instagram', regex: /instagram\.com\/([a-zA-Z0-9_.]+)/i },
+      { label: 'X/Twitter', regex: /(?:twitter|x)\.com\/([a-zA-Z0-9_]+)/i },
+      { label: 'LinkedIn', regex: /linkedin\.com\/in\/([a-zA-Z0-9-]+)/i },
+      { label: 'GitHub', regex: /github\.com\/([a-zA-Z0-9-]+)/i },
+      { label: 'YouTube', regex: /youtube\.com\/@([a-zA-Z0-9_-]+)/i },
+      { label: 'TikTok', regex: /tiktok\.com\/@([a-zA-Z0-9_.]+)/i },
+    ];
+    for (const { label, regex } of accPatterns) {
+      const m = pt.match(regex);
+      if (m && !seen.has(label+m[1])) {
+        seen.add(label+m[1]);
+        details.push({ label, value: '@'+m[1] });
+      }
+    }
+
+    return details;
+  }
+
   function extractKeywords(data) {
     const c = [data.name,data.location,data.hometown,data.work,data.education,data.bio].filter(Boolean).join(' ')+' '+document.body.innerText;
     const kws=[], seen=new Set();
@@ -803,7 +927,22 @@
       </div>`;
     }
 
-    // ====== 关联账号 ======
+    
+    // ====== 所有个人详情 ======
+    const allDetails = extractAllDetails();
+    if (allDetails.length > (data.keywords||[]).length + (data.linkedAccounts||[]).length) {
+      // Only show if there's info beyond what's already displayed
+      html+=`<div style="background:white;border:1px solid #D4EDFB;border-radius:14px;padding:10px 12px;margin-bottom:8px;">
+        <div style="font-size:11px;color:#8AB4D6;font-weight:600;margin-bottom:5px;">📋 扫描到的所有信息</div>`;
+      allDetails.forEach(d=>{
+        html+=`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #F0F8FF;font-size:12px;">
+          <span style="color:#8AB4D6;min-width:70px;">${d.label}</span>
+          <span style="flex:1;text-align:right;color:#3A5A7A;word-break:break-word;margin:0 6px;">${d.value}</span>
+          <button class="copy-btn" style="background:none;border:none;color:#87CEEB;cursor:pointer;font-size:12px;padding:2px 6px;" data-copy="${d.value.replace(/"/g,'&quot;')}">📋</button>
+        </div>`;
+      });
+      html+=`</div>`;
+    }// ====== 关联账号 ======
     const accs=data.linkedAccounts||[];
     if(accs.length){
       html+=`<div style="background:white;border:1px solid #D4EDFB;border-radius:14px;padding:10px 12px;margin-bottom:8px;">
@@ -912,27 +1051,32 @@
   }
 
   // ==================== 共同好友 Tab ====================
-  function renderMutualTab(data) {
-    const mfs=data.mutualFriends||[];
-    let h='';
-    if(!mfs.length) h='<div style="text-align:center;padding:30px;color:#8AB4D6;"><div style="font-size:36px;margin-bottom:10px;">🤝</div>无共同好友</div>';
-    else {
-      h=`<div class="field-label" style="margin-bottom:4px;">🤝 ${mfs.length} 个共同好友</div>`;
-      mfs.forEach(m=>{
-        const av=(m.avatars||[]).filter(Boolean).map(a=>`<img src="${a}">`).join('');
-        const bg=m.count>0?` <span style="color:#87CEEB;font-size:10px;">(${m.count})</span>`:'';
-        h+=`<div class="list-item">${av}<span class="li-name">${m.text}${bg}</span>${m.url?`<a class="li-link" href="${m.url}" target="_blank">→</a>`:''}</div>`;
-      });
+    function renderMutualTab(data) {
+    // 提取目标的好友列表
+    const friends = extractFriendList();
+    let html = '';
+    if (!friends.length) {
+      html = '<div style="text-align:center;padding:30px;color:#8AB4D6;">';
+      html += '<div style="font-size:36px;margin-bottom:10px;">👥</div>';
+      html += '<div>未检测到好友列表</div>';
+      html += '<div style="font-size:11px;margin-top:6px;">提示：往下翻到目标主页的 Friends 区域后刷新面板</div>';
+      html += '<div style="margin-top:10px;"><button id="osint-scan-friends" style="background:#87CEEB;border:none;color:white;padding:8px 20px;border-radius:10px;cursor:pointer;font-size:12px;">🔄 重新扫描</button></div>';
+      html += '</div>';
+    } else {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+      html += '<span class="field-label" style="margin:0;">👥 目标的好友 (' + friends.length + ')</span>';
+      html += '<button id="osint-friends-export" style="background:white;border:1px solid #D4EDFB;border-radius:8px;color:#5BA3C9;padding:3px 10px;cursor:pointer;font-size:10px;">📥 导出CSV</button>';
+      html += '</div>';
+      for (const f of friends) {
+        const av = f.avatar ? '<img src="' + f.avatar + '" />' : '';
+        html += '<div class="list-item">' + av + '<span class="li-name">👤 ' + f.name + '</span>';
+        if (f.url) html += '<a class="li-link" href="' + f.url + '" target="_blank">→</a>';
+        html += '</div>';
+      }
+      html += '<button id="osint-scan-friends" style="width:100%;margin-top:8px;padding:6px;background:white;border:1px solid #D4EDFB;border-radius:8px;color:#5BA3C9;cursor:pointer;font-size:10px;">🔄 重新扫描</button>';
     }
-    h+=`<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
-      <button id="osint-highlight-mutual" style="background:#87CEEB;border:none;color:white;padding:4px 12px;border-radius:8px;cursor:pointer;font-size:10px;">🔦 高亮</button>
-      <button id="osint-expand-mutual" style="background:white;border:1px solid #D4EDFB;color:#5BA3C9;padding:4px 12px;border-radius:8px;cursor:pointer;font-size:10px;">🔽 展开采集</button>
-    </div>`;
-    return h;
-  }
-
-  // ==================== 群组 Tab ====================
-  function renderGroupTab() {
+    return html;
+  }function renderGroupTab() {
     return `<div>
       <div style="font-size:14px;font-weight:700;margin-bottom:4px;color:#3A5A7A;">👥 群组成员扫描</div>
       <div style="font-size:11px;color:#8AB4D6;margin-bottom:10px;">自动滚动页面采集群组成员，导出 CSV</div>
@@ -1331,6 +1475,22 @@
     if(t.id==='osint-ri-google'){const img=document.getElementById('osint-avatar-img');if(img) reverseImageSearch(img.src,'google');}
     if(t.id==='osint-ri-tineye'){const img=document.getElementById('osint-avatar-img');if(img) reverseImageSearch(img.src,'tineye');}
     if(t.id==='osint-ri-yandex'){const img=document.getElementById('osint-avatar-img');if(img) reverseImageSearch(img.src,'yandex');}
+
+    
+    // 好友列表导出
+    if(t.id==='osint-friends-export'){
+      const friends = extractFriendList();
+      if(friends.length) {
+        downloadFile('目标好友_'+Date.now()+'.csv', toCSV(friends.map(f=>({姓名:f.name,链接:f.url}))), 'text/csv');
+        showStatus('已导出 '+friends.length+' 个好友');
+      }
+    }
+    // 好友列表重新扫描
+    if(t.id==='osint-scan-friends'){
+      if(document.getElementById('osint-tab-content'))
+        document.getElementById('osint-tab-content').innerHTML = renderMutualTab();
+      showStatus('已重新扫描');
+    }
 
     // 表头排序
     if(t.closest('th')&&t.closest('th').dataset.col){
