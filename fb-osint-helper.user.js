@@ -292,29 +292,52 @@ const Extractor = {
     // Profile ID from URL
     data.profileId = data.profileId || window.location.pathname.match(/([^/?]+)/)?.[1] || '';
 
-    // 后面的字段只在 JSON 没给够时才扫 DOM
-    if (!data.location || !data.work || !data.education) {
+    // ====== 定向提取 ProfileTilesFeed (个人详情区块) ======
+    // Facebook 新版个人页用 ProfileTilesFeed 渲染个人信息
+    if (!data.location || !data.gender) {
+      this._fromTiles(data);
+    }
+
+    // 后面的字段只在 JSON 没给够时才扫 DOM 文本
+    if (!data.location || !data.work || !data.education || !data.hometown) {
       const pt = this._profileText();
       if (pt) {
+        // 英文
         const m1 = pt.match(/Lives in\s+([^\n,]+)/i);  if (m1 && !data.location) data.location = m1[1].trim();
         const m2 = pt.match(/(?:^|\n)From\s+([^\n,]+)/i); if (m2 && !data.hometown) data.hometown = m2[1].trim();
         const m3 = pt.match(/Works at\s+([^\n,]+)/i); if (m3 && !data.work) data.work = m3[1].trim();
         const m4 = pt.match(/(?:Studied at|Went to)\s+([^\n,]+)/i); if (m4 && !data.education) data.education = m4[1].trim();
+        // 中文
+        const c1 = pt.match(/住在\s*([^\n,]+)/); if (c1 && !data.location) data.location = c1[1].trim();
+        const c2 = pt.match(/来自\s*([^\n,]+)/); if (c2 && !data.hometown) data.hometown = c2[1].trim();
+        const c3 = pt.match(/工作\s*(?:于|在)\s*([^\n,]+)/i); if (c3 && !data.work) data.work = c3[1].trim();
+        const c4 = pt.match(/(?:就读于|曾在)\s*([^\n,]+)/); if (c4 && !data.education) data.education = c4[1].trim();
       }
     }
-    // 关系状态
+    // 关系状态 (中英文)
     if (!data.relationship) {
-      const statuses = ['Single','In a relationship','Married','Engaged','Divorced','Widowed'];
+      const statuses = ['Single','In a relationship','Married','Engaged','Divorced','Widowed','单身','恋爱中','已婚','订婚','离异','丧偶'];
       const profileArea = document.querySelector('[data-pagelet="Profile"],[data-pagelet="ProfileAbout"]');
       if (profileArea) {
         const t = profileArea.textContent;
         for (const s of statuses) { if (t.includes(s)) { data.relationship = s; break; } }
       }
     }
-    // 生日
+    // 性别 (中文)
+    if (!data.gender) {
+      const profileArea = document.querySelector('[data-pagelet="Profile"],[data-pagelet="ProfileAbout"]');
+      if (profileArea) {
+        const t = profileArea.textContent;
+        if (t.includes('女性') || t.includes('女')) data.gender = '女性';
+        else if (t.includes('男性') || t.includes('男')) data.gender = '男性';
+      }
+    }
+    // 生日 (中英文)
     if (!data.birthday) {
-      const bd = document.body.innerText.match(/Birthday\s*:?\s*(\w+\s+\d{1,2}(?:,\s*\d{4})?)/i);
-      if (bd) data.birthday = bd[1];
+      const bd1 = document.body.innerText.match(/Birthday\s*:?\s*(\w+\s+\d{1,2}(?:,\s*\d{4})?)/i);
+      if (bd1) data.birthday = bd1[1];
+      const bd2 = document.body.innerText.match(/生日\s*:?\s*(\d{1,2}\s*月\s*\d{1,2}\s*日(?:\s*\d{4})?)/);
+      if (bd2 && !data.birthday) data.birthday = bd2[1];
     }
     // 简介
     if (!data.bio) {
@@ -324,10 +347,103 @@ const Extractor = {
         if (t.length > 10 && t.length < 1000) data.bio = t.slice(0, 400);
       }
     }
-    // 好友/粉丝数
+    // 好友/粉丝数 (中英文)
     if (!data.friendsCount) {
-      const fc = document.body.innerText.match(/([\d,]+)\s*(?:friends?|mutual friends?)/i);
-      if (fc) data.friendsCount = fc[1];
+      const fc1 = document.body.innerText.match(/([\d,]+)\s*(?:friends?|mutual friends?)/i);
+      if (fc1) data.friendsCount = fc1[1];
+      const fc2 = document.body.innerText.match(/([\d,]+)\s*(?:位好友|个好友)/);
+      if (fc2 && !data.friendsCount) data.friendsCount = fc2[1];
+    }
+  },
+
+  /**
+   * 定向提取 ProfileTilesFeed 区块 (新版 FB 个人详情卡片)
+   * Facebook 用 data-pagelet="ProfileTilesFeed_*" 渲染: 所在地、家乡、性别、工作等
+   */
+  _fromTiles(data) {
+    // 找所有 ProfileTilesFeed
+    const tilesFeeds = document.querySelectorAll('[data-pagelet^="ProfileTilesFeed"]');
+    if (!tilesFeeds.length) return;
+
+    for (const feed of tilesFeeds) {
+      const text = feed.textContent;
+
+      // 找标题: 每个 tiles feed 有个 h2
+      const h2 = feed.querySelector('h2');
+      if (!h2) continue;
+      const sectionTitle = h2.textContent.trim();
+
+      if (sectionTitle.includes('个人详情') || sectionTitle.includes('Details') || sectionTitle.includes('About')) {
+        // 这个 feed 包含 所在地/家乡/性别 等
+        const items = feed.querySelectorAll('[role="listitem"] span span, [role="listitem"] [dir="auto"]');
+        for (const item of items) {
+          const t = item.textContent.trim();
+          if (!t || t.length < 2) continue;
+
+          if (t.startsWith('住在') || t.startsWith('Lives in')) {
+            const val = t.replace(/^住在\s*|^Lives in\s*/i, '').trim();
+            if (val && !data.location) data.location = val;
+          } else if (t.startsWith('来自') || t.startsWith('From')) {
+            const val = t.replace(/^来自\s*|^From\s*/i, '').trim();
+            if (val && !data.hometown) data.hometown = val;
+          } else if (t === '女性' || t === '女') {
+            if (!data.gender) data.gender = '女性';
+          } else if (t === '男性' || t === '男') {
+            if (!data.gender) data.gender = '男性';
+          } else if (t === 'Female') {
+            if (!data.gender) data.gender = 'Female';
+          } else if (t === 'Male') {
+            if (!data.gender) data.gender = 'Male';
+          }
+        }
+      } else if (sectionTitle.includes('工作') || sectionTitle.includes('Work') || sectionTitle.includes('Employment')) {
+        // 工作经历
+        const items = feed.querySelectorAll('[role="listitem"]');
+        for (const item of items) {
+          const spans = item.querySelectorAll('span[dir="auto"]');
+          for (const span of spans) {
+            const t = span.textContent.trim();
+            if (t && t.length > 2 && t.length < 100 && !t.match(/^\d/) && !t.includes('·') && !t.includes('月') && !t.includes('年')) {
+              if (!data.work) data.work = t;
+              break;
+            }
+          }
+          if (data.work) break;
+        }
+      } else if (sectionTitle.includes('教育') || sectionTitle.includes('Education') || sectionTitle.includes('School')) {
+        const items = feed.querySelectorAll('[role="listitem"]');
+        for (const item of items) {
+          const spans = item.querySelectorAll('span[dir="auto"]');
+          for (const span of spans) {
+            const t = span.textContent.trim();
+            if (t && t.length > 2 && t.length < 100 && !t.match(/^\d/)) {
+              if (!data.education) data.education = t;
+              break;
+            }
+          }
+          if (data.education) break;
+        }
+      }
+    }
+
+    // Fallback: 直接扫 ProfileTilesFeed 文本
+    if (!data.location || !data.hometown || !data.gender) {
+      for (const feed of tilesFeeds) {
+        const text = feed.textContent;
+        // 中英文混合匹配
+        if (!data.location) {
+          const lm = text.match(/(?:住在|Lives in)\s*([^\n,]+)/i);
+          if (lm) data.location = lm[1].trim();
+        }
+        if (!data.hometown) {
+          const hm = text.match(/(?:来自|From)\s*([^\n,]+)/i);
+          if (hm) data.hometown = hm[1].trim();
+        }
+        if (!data.gender) {
+          if (/女性|Female/i.test(text)) data.gender = '女性';
+          else if (/男性|Male/i.test(text)) data.gender = '男性';
+        }
+      }
     }
   },
 
@@ -438,7 +554,12 @@ const Extractor = {
     const lines = [];
 
     // 个人信息标签
-    if (data.gender) tags.push(data.gender === 'MALE' || data.gender === 'male' ? '👨 男' : '👩 女');
+    if (data.gender) {
+        const g = data.gender.toLowerCase();
+        if (g === 'male' || g === '男性' || g === '男') tags.push('👨 男');
+        else if (g === 'female' || g === '女性' || g === '女') tags.push('👩 女');
+        else tags.push('👤 ' + data.gender);
+      }
     if (data.relationship) tags.push({ 'Single':'💔 单身','In a relationship':'💑 恋爱中','Married':'💍 已婚','Engaged':'💍 订婚','Divorced':'💔 离异','Widowed':'🕊️ 丧偶' }[data.relationship] || `💕 ${data.relationship}`);
     if (data.birthday) {
       const age = data.birthday.match(/\d{4}/);
