@@ -656,8 +656,25 @@ const Extractor = {
 // ============================================================
 //  🎯 智能破冰话术引擎
 // ============================================================
+function isChineseTarget(data) {
+  // 检测目标是中国人/中文圈
+  const check = (s) => s && /[\u4e00-\u9fff]/.test(s);
+  if (check(data.location)) return true;
+  if (check(data.hometown)) return true;
+  if (check(data.work)) return true;
+  if (check(data.education)) return true;
+  if (check(data.bio)) return true;
+  if (check(data.name)) return true;
+  // 位置包含台湾/中国城市英文名
+  const cnCities = ['taipei','taichung','kaohsiung','tainan','taoyuan','hsinchu','keelung','chiayi','changhua','pingtung','yilan','hualien','taitung','nantou','miaoli','yunlin','kinmen','penghu','beijing','shanghai','guangzhou','shenzhen','chengdu','hangzhou','nanjing','wuhan','xiamen','hong kong','macau'];
+  const loc = (data.location || '').toLowerCase();
+  if (cnCities.some(c => loc.includes(c))) return true;
+  return false;
+}
+
 function generateIcebreakers(data) {
   const msgs = [];
+  const cn = isChineseTarget(data);
   const isFemale = data.gender && (data.gender.toLowerCase().includes('女性') || data.gender.toLowerCase().includes('female') || data.gender === '女');
 
   const loc = data.location ? data.location.split(',')[0].trim() : null;
@@ -665,85 +682,120 @@ function generateIcebreakers(data) {
   const edu = data.education ? data.education.split(';')[0].trim() : null;
   const interest = data.interestWords && data.interestWords.length > 0 ? data.interestWords.slice(0, 2) : null;
 
-  // ===== 基于位置的切入（随机选一种表述） =====
-  if (loc) {
-    const locLines = [
-      `Hello from a neighbor! I'm around ${loc} too. Random hi 🙃`,
-      `Hey! I noticed you're in ${loc} — small world! I'm nearby as well 😄`,
-      `Okay this might sound random but I saw you're in ${loc} and thought I'd say hey 👋`,
-      `${loc} represent! 🙌 Just browsing and saw your profile — hi!`,
-      `No way, you're in ${loc}? I'm around there too! What are the odds 😂`,
-      `Just scrolling and saw you're in ${loc}... hello from a neighbor! 🤗`,
+  // ===== 中文话术 =====
+  if (cn) {
+    // 位置
+    if (loc) {
+      const lines = [
+        `哈囉～我也在${loc}附近诶，好巧！打个招呼 🙃`,
+        `诶你也在${loc}？我刚好刷到，世界真小 😄`,
+        `${loc}的朋友你好！我是路过的，进来say个hi 👋`,
+        `刷到你也在${loc}，感觉挺有缘的，hi一下 🤗`,
+      ];
+      msgs.push(lines[Math.floor(Math.random() * lines.length)]);
+    }
+    // 工作
+    if (work) {
+      const lines = [
+        `你在${work}哦？那边怎么样呀？有点好奇 🤔`,
+        `${work}！感觉好酷，平时忙不忙呀？😄`,
+        `看到你在${work}，冒昧问一句工作氛围好吗？`,
+      ];
+      msgs.push(lines[Math.floor(Math.random() * lines.length)]);
+    }
+    // 兴趣
+    if (interest) {
+      const t = interest[0];
+      const lines = [
+        `看到你喜欢${t}！我也蛮感兴趣的，有推荐吗？🙃`,
+        `${t}！好巧，我也在关注这个诶 👀`,
+      ];
+      msgs.push(lines[Math.floor(Math.random() * lines.length)]);
+    }
+    // 教育
+    if (edu) {
+      msgs.push(`${edu}出来的？校友你好 🙌`);
+    }
+    // 中文通用
+    const cnFallback = [
+      "嗨！我知道这很突然，但看到你的主页感觉你很有趣，想认识一下 🙃",
+      "好吧我直接说了，刷到你主页觉得不打个招呼会后悔 😂",
+      "我一般不随便加人的，但你的主页看起来很顺眼，所以来say个hi 😄",
+      "放心我不是机器人🤖 只是一个刚好刷到你、觉得你很有意思的人哈哈",
+      "犹豫了一下还是决定发这条消息。你好呀～🙋‍♂️",
+      "虽然有点冒昧，但你的主页给人的感觉很舒服，所以来打个招呼 😊",
+      "日常冲浪刷到你，感觉应该认识一下！hi～🌟",
     ];
-    msgs.push(locLines[Math.floor(Math.random() * locLines.length)]);
-  }
-
-  // ===== 基于工作的切入 =====
-  if (work) {
-    const workLines = [
-      `Saw you're at ${work} — how is it over there? I've been curious about that place 🤔`,
-      `${work}! That's awesome. What's the vibe like there? 😄`,
-      `I noticed you're connected to ${work} — I've heard interesting things about it!`,
-      `Hey! ${work} caught my eye. Are you enjoying it there? 🙃`,
-      `You at ${work}? No way, I know someone who used to work there. Small world!`,
-      `Random but — how's life at ${work}? Always been curious 🤗`,
+    for (let i = 0; i < 3; i++) {
+      msgs.push(cnFallback[Math.floor(Math.random() * cnFallback.length)]);
+    }
+  } else {
+    // ===== 英文话术 =====
+    if (loc) {
+      const lines = [
+        `Hello from a neighbor! I'm around ${loc} too. Random hi 🙃`,
+        `Hey! I noticed you're in ${loc} — small world! I'm nearby as well 😄`,
+        `${loc} represent! 🙌 Just browsing and saw your profile — hi!`,
+        `No way, you're in ${loc}? I'm around there too! What are the odds 😂`,
+        `Just scrolling and saw you're in ${loc}... hello from a neighbor! 🤗`,
+      ];
+      msgs.push(lines[Math.floor(Math.random() * lines.length)]);
+    }
+    if (work) {
+      const lines = [
+        `Saw you're at ${work} — how is it over there? I've been curious 🤔`,
+        `${work}! That's awesome. What's the vibe like there? 😄`,
+        `I noticed you're connected to ${work} — I've heard interesting things!`,
+        `You at ${work}? No way, I know someone who used to work there. Small world!`,
+      ];
+      msgs.push(lines[Math.floor(Math.random() * lines.length)]);
+    }
+    if (interest) {
+      const t = interest[0];
+      const lines = [
+        `I saw something about ${t} on your profile — that's really cool! Any recommendations? 😊`,
+        `${t}! I'm into that too honestly. 🙃`,
+        `I noticed you're into ${t} — that's awesome! Been getting into it lately too 👀`,
+      ];
+      msgs.push(lines[Math.floor(Math.random() * lines.length)]);
+    }
+    if (edu) {
+      msgs.push(`${edu}? I have friends from there! How was it? 😊`);
+    }
+    // 英文通用
+    const enFallback = [
+      "Hey! I know this is random, but I saw your profile and something told me I'd regret it if I didn't say hi 🙃",
+      "Okay this is going to sound insane, but I'm just gonna go for it. Hi 🙃",
+      "I promise I'm not a bot 😂 just someone who saw your profile and thought you seemed cool",
+      "I normally don't message strangers on here, but your vibe seems worth the risk. Hi 🙋‍♂️",
+      "Honestly? I liked your vibe. Your profile gave off normal-human-energy 😂",
+      "I was just scrolling and your profile made me smile. So here I am saying hi 😄",
+      "Random message alert 🚨 You seem like an interesting person 😊",
     ];
-    msgs.push(workLines[Math.floor(Math.random() * workLines.length)]);
+    for (let i = 0; i < 3; i++) {
+      msgs.push(enFallback[Math.floor(Math.random() * enFallback.length)]);
+    }
   }
 
-  // ===== 基于兴趣的切入 =====
-  if (interest && interest.length > 0) {
-    const topic = interest[0];
-    const interestLines = [
-      `I saw something about ${topic} on your profile — that's really cool! Do you follow it much? 😊`,
-      `${topic}! I'm into that too honestly. Any recommendations? 🙃`,
-      `I noticed you're into ${topic} — that's awesome! I've been getting into it lately too 👀`,
-      `Okay but your thing about ${topic} is actually super interesting ngl 😄`,
-    ];
-    msgs.push(interestLines[Math.floor(Math.random() * interestLines.length)]);
-  }
-
-  // ===== 基于教育的切入 =====
-  if (edu) {
-    const eduLines = [
-      `${edu}? I have friends from there! How was it? 😊`,
-      `Oh you went to ${edu}? Nice! I've heard good things about it 🙌`,
-    ];
-    msgs.push(eduLines[Math.floor(Math.random() * eduLines.length)]);
-  }
-
-  // ===== 通用保底（随机选） =====
-  const fallbackLines = [
-    "Hey! I know this is random, but I saw your profile and something told me I'd regret it if I didn't say hi 🙃",
-    "Okay this is going to sound insane, but I'm just gonna go for it. Hi 🙃",
-    "I promise I'm not a bot 😂 just someone who saw your profile and thought you seemed cool",
-    "I normally don't message strangers on here, but your vibe seems worth the risk. Hi 🙋‍♂️",
-    "Honestly? I liked your vibe. Your profile gave off normal-human-energy 😂",
-    "I was just scrolling and your profile made me smile. So here I am saying hi 😄",
-    "Random message alert 🚨 You seem like an interesting person 😊",
-    "Life's too short to pass up the chance to meet cool people. So here I am, saying hi 🫶",
-  ];
-
-  // 混入 2 条通用话术, 再加几条保底
-  for (let i = 0; i < 2; i++) {
-    msgs.push(fallbackLines[Math.floor(Math.random() * fallbackLines.length)]);
-  }
-
-  // 去重
+  // 去重 + 保证 5-6 条
   const unique = [...new Set(msgs)];
-
-  // 如果不够 5 条, 补充到 5
   while (unique.length < 5) {
-    unique.push(fallbackLines[Math.floor(Math.random() * fallbackLines.length)]);
+    const fallback = cn
+      ? ["嗨！感觉你很有意思，想认识一下 😊", "你好呀～交个朋友？🙃"]
+      : ["Hey! You seem cool, hi 😊", "Hi there! Thought I'd say hello 👋"];
+    unique.push(fallback[Math.floor(Math.random() * fallback.length)]);
   }
 
   return unique.slice(0, 6).map((text) => {
-    // 自动检测话术基于什么信息, 打标签
-    let style = '💬 通用';
-    if (loc && text.toLowerCase().includes(loc.toLowerCase().slice(0, 5))) style = '📍 位置';
-    else if (work && text.includes(work.slice(0, 8))) style = '💼 工作';
-    else if (interest && text.toLowerCase().includes(interest[0].toLowerCase().slice(0, 4))) style = '🏷️ 兴趣';
-    else if (edu && text.includes(edu.slice(0, 6))) style = '🎓 教育';
+    let style = cn ? '💬 通用' : '💬 General';
+    const locCheck = loc ? loc.slice(0, cn ? 2 : 5).toLowerCase() : '';
+    const workCheck = work ? work.slice(0, cn ? 2 : 8).toLowerCase() : '';
+    const intCheck = interest ? interest[0].slice(0, cn ? 2 : 4).toLowerCase() : '';
+    const t = text.toLowerCase();
+    if (locCheck && t.includes(locCheck)) style = cn ? '📍 位置' : '📍 Location';
+    else if (workCheck && t.includes(workCheck)) style = cn ? '💼 工作' : '💼 Work';
+    else if (intCheck && t.includes(intCheck)) style = cn ? '🏷️ 兴趣' : '🏷️ Interest';
+    else if (edu && text.includes(edu.slice(0, cn ? 2 : 6))) style = cn ? '🎓 教育' : '🎓 School';
     return { text, style };
   });
 }
