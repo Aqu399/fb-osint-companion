@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FB OSINT Companion</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; background: #1c1e21; color: #e4e6eb; line-height: 1.6; }
+    a { color: #2d88ff; }
+    h1 { font-size: 28px; }
+    .install-btn { display: inline-block; background: #2d88ff; color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; margin: 10px 0; }
+    .install-btn:hover { background: #1a6fdc; }
+    .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 20px 0; }
+    .feature-grid .item { background: #242526; padding: 8px 12px; border-radius: 6px; font-size: 13px; }
+    code { background: #242526; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+    pre { background: #242526; padding: 12px; border-radius: 6px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>🕵️ FB OSINT Companion</h1>
+  <p>Tampermonkey userscript for authorized penetration testing OSINT on Facebook.</p>
+  <a class="install-btn" href="fb-osint-helper.user.js">📦 Install Userscript</a>
+  <p><small>Requires <a href="https://www.tampermonkey.net/">Tampermonkey</a> installed first.</small></p>
+
+  <h2>Features</h2>
+  <div class="feature-grid">
+    <div class="item">👤 Profile scraping</div>
+    <div class="item">🔑 Auto keyword extraction</div>
+    <div class="item">🎯 OSINT pivot links</div>
+    <div class="item">🤝 Mutual friends + popup scrape</div>
+    <div class="item">👥 Group member batch scan</div>
+    <div class="item">📰 Timeline post extraction</div>
+    <div class="item">📸 Photo date/location scan</div>
+    <div class="item">📞 Contact info detection</div>
+    <div class="item">📅 Event extraction</div>
+    <div class="item">🔗 Network collection (PYMK + groups)</div>
+    <div class="item">⚠️ Profile change tracking</div>
+    <div class="item">💬 Messenger notepad + templates</div>
+  </div>
+
+  <h2>Installation</h2>
+  <ol>
+    <li>Install <a href="https://www.tampermonkey.net/">Tampermonkey</a> for your browser</li>
+    <li>Click <strong>Install Userscript</strong> above</li>
+    <li>Tampermonkey will prompt — click <strong>Install</strong></li>
+  </ol>
+
+  <h2>Usage</h2>
+  <p>Visit any Facebook profile page — the panel auto-opens. Use <code>Ctrl+Shift+P</code> to toggle, <code>Ctrl+Shift+N</code> for Messenger notepad.</p>
+
+  <h2>Disclaimer</h2>
+  <p>This tool is for <strong>authorized security testing only</strong>. All data is stored locally in your browser.</p>
+
+  <hr>
+  <p style="color:#8a8d91;font-size:12px;">github.com/Aqu399/fb-osint-companion</p>
+</body>
+</html>
