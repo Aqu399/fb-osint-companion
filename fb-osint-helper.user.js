@@ -657,98 +657,68 @@ const Extractor = {
 //  🎯 智能破冰话术引擎
 // ============================================================
 function generateIcebreakers(data) {
-  // 生成多组不同风格的话术
-  const styles = {
-    casual: [],   // 随性自然
-    direct: [],   // 直球
-    playful: [],  // 俏皮
-    subtle: [],   // 含蓄（不暴露信息源）
-  };
-
-  const loc = data.location ? data.location.split(',')[0].trim() : null;
-  const work = data.work ? data.work.split(';')[0].trim() : null;
-  const edu = data.education ? data.education.split(';')[0].trim() : null;
-  const interest = data.interestWords && data.interestWords.length > 0 ? data.interestWords[0] : null;
+  // 真人社交破冰话术库
+  // 核心原则：不讲具体资料（不暴露偷窥痕迹），只表达随性/真诚/有趣
+  // 分组：根据目标资料微调用语氛围，但绝不直接引用字段值
   const isFemale = data.gender && (data.gender.toLowerCase().includes('女性') || data.gender.toLowerCase().includes('female') || data.gender === '女');
 
-  // ===== 随性自然风 =====
-  if (loc) {
-    styles.casual.push(`Hey, 我也在${loc}附近，感觉这边圈子不大，指不定哪天能碰上 😄`);
-    styles.casual.push(`刷到你主页，${loc}的小伙伴～hi 一下 🙋‍♂️`);
-  }
-  if (work) {
-    styles.casual.push(`刷到你在${work}，冒昧问一句，那地方工作氛围怎么样？最近在考虑动一动 🤔`);
-  }
-  if (interest) {
-    styles.casual.push(`刷到你也喜欢${interest}，最近有入手什么新的吗？👀`);
-  }
-  if (edu) {
-    styles.casual.push(`${edu}出来的？校友你好 🙌`);
+  // 通用话术池（不分男女/资料）
+  const pool = [
+    "Hey! I know this is random, but I saw your profile and something told me I'd regret it if I didn't say hi 🙃",
+    "Okay this is going to sound insane, but I'm just gonna go for it. Hi 🙃",
+    "I know this is out of blue, but I've been having one of those weeks where you just feel like taking a chance. So... hi 😊",
+    "This is super random but your profile caught my attention. Thought I'd say hello 👋",
+    "I promise I'm not a bot 😂 just someone who saw your profile and thought you seemed cool",
+    "I normally don't message strangers on here, but your vibe seems worth the risk. Hi 🙋‍♂️",
+    "I was just scrolling and your profile made me smile. So here I am saying hi 😄",
+    "Honestly? I liked your vibe. Your profile gave off normal-human-energy which is surprisingly rare 😂",
+    "I'm fully aware this is random. But hey, the best things happen when you take a chance, right? 🤷‍♂️",
+    "Okay I'll be real — I saw your profile and I just had to say hi. Hope your day is going well ✨",
+    "Random message alert 🚨 But I figured why not. You seem like an interesting person 😊",
+    "This is me taking a shot in the dark. You look like someone worth knowing. Hi 👋",
+    "I'm going to blame this on impulsiveness but I saw your profile and thought you look friendly. So... hi 😄",
+    "I know messaging strangers is weird, but I figured what's the worst that could happen? 😅",
+    "Life's too short to pass up the chance to meet cool people. So here I am, saying hi 🫶",
+  ];
+
+  // 如果目标为女性，混入几条更柔和的
+  const femalePool = [
+    "Hey! I was scrolling and your profile caught my eye. Thought I'd take a chance and say hi 😊",
+  ];
+
+  // 有工作经历时，混入几条职场相关（但不具体提公司名）
+  if (data.work) {
+    pool.push(
+      "Hey! I saw your profile and noticed you're working too. Just thought I'd say hi 🫡",
+      "Working adult solidarity ✊ Saw your profile and thought you seem cool, hi 😄",
+    );
   }
 
-  // ===== 直球风 =====
-  if (loc && isFemale) {
-    styles.direct.push(`Okay我承认有点突然，但看到你是${loc}的，想认识一下。不行当我没说 😂`);
-  }
-  if (work) {
-    styles.direct.push(`${work}！这工作有意思，你是做什么岗位的？`);
-  }
-  if (interest) {
-    styles.direct.push(`你玩${interest}的吗？有机会交流一下！`);
-  }
-  if (loc && work) {
-    styles.direct.push(`${loc} + ${work}，你这配置有意思，交个朋友？`);
+  // 选 6 条（女性目标时混入柔和版）
+  let selected = [];
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  selected = shuffled.slice(0, 4);
+
+  if (isFemale) {
+    const extra = [...femalePool].sort(() => Math.random() - 0.5).slice(0, 2);
+    selected = [...selected, ...extra];
   }
 
-  // ===== 俏皮风 =====
-  if (loc) {
-    styles.playful.push(`哈囉${loc}的朋友，我是隔壁路过的，进来打个卡 🙃`);
-  }
-  if (work) {
-    styles.playful.push(`我掐指一算，你在${work}上班对不对？不准的话我请你喝咖啡 😂`);
-  }
-  styles.playful.push(`我发誓我不是机器人！只是刚好刷到你，觉得应该打个招呼而已 🤖‍♂️`);
-
-  // ===== 含蓄风（不露信息） =====
-  styles.subtle.push(`Hi! 觉得你的页面很有趣，冒昧打个招呼～`);
-  if (interest) {
-    styles.subtle.push(`无意中刷到你，发现我们有共同的爱好，来say hi 😊`);
-  }
-  styles.subtle.push(`其实我平时不太在FB上主动找人聊天的，但你给我的感觉挺特别的，所以…hi🙂`);
-  if (loc) {
-    styles.subtle.push(`世界真小，居然刷到同在${loc}的人！`);
+  // 补充到6条
+  while (selected.length < 6) {
+    const extra = [...pool].sort(() => Math.random() - 0.5).slice(0, 1);
+    selected.push(extra[0]);
   }
 
-  // 每组选1-2条
-  const result = [];
-  for (const style of ['casual', 'direct', 'playful', 'subtle']) {
-    const pool = styles[style];
-    if (pool.length > 0) {
-      // 随机选一条
-      result.push(pool[Math.floor(Math.random() * pool.length)]);
-      if (pool.length > 1 && result.length < 8) {
-        result.push(pool[Math.floor(Math.random() * pool.length)]);
-      }
-    }
-    if (result.length >= 6) break;
-  }
+  // 去重
+  selected = [...new Set(selected)].slice(0, 6);
 
-  // 去重 + 保证至少有一条通用保底
-  const unique = [...new Set(result)];
-  if (unique.length === 0) {
-    unique.push("Hi! 看到你的主页感觉你很有趣，想认识一下 🙃");
-    unique.push("我平时一般不随便加人的，但你的主页看起来很有意思 😄");
-  }
-
-  return unique.slice(0, 6).map(msg => {
-    //给每条话术标注风格标签
-    const tagMap = { casual: '随性', direct: '直球', playful: '俏皮', subtle: '含蓄' };
-    let tag = '';
-    for (const [k, v] of Object.entries(tagMap)) {
-      if (styles[k].includes(msg)) { tag = v; break; }
-    }
-    return { text: msg, style: tag };
-  });
+  // 标注风格（随机分配）
+  const styleLabels = ['💬', '😏', '⚡', '🎐', '🙃', '✨'];
+  return selected.map((text, i) => ({
+    text,
+    style: styleLabels[i % styleLabels.length],
+  }));
 }
 
 
@@ -821,7 +791,7 @@ function tabIce(data) {
   const ice = data.icebreakers || [];
   if (!ice.length) return `<div class="emp"><span>🎯</span>暂无破冰话术<br><small style="color:#8AB4D6">需要先采集目标资料</small></div>`;
 
-  const styleLabels = { casual: '💬 随性', direct: '⚡ 直球', playful: '😏 俏皮', subtle: '🎐 含蓄' };
+  const styleEmojis = { '💬':'随性', '😏':'俏皮', '⚡':'直球', '🎐':'含蓄', '🙃':'自然', '✨':'温柔' };
 
   let h = `<div class="card" style="background:#E8F4FD;border-color:#87CEEB;">
     <h3 style="color:#5BA3C9">🎯 破冰话术</h3>
@@ -830,7 +800,7 @@ function tabIce(data) {
   ice.forEach((item, i) => {
     const msg = item.text || item;
     const style = item.style || '';
-    const styleLabel = styleLabels[style] || '';
+    const styleLabel = styleEmojis[style] ? style + ' ' + styleEmojis[style] : style;
     h += `<div style="background:white;border:1px solid #D4EDFB;border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer;" class="v6-copy-ice" data-ice="${escHtml(msg)}">
       <div style="display:flex;align-items:flex-start;gap:8px;">
         <span style="color:#87CEEB;font-weight:700;font-size:12px;">${styleLabel}</span>
