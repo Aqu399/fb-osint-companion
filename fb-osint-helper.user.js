@@ -558,19 +558,27 @@ const Extractor = {
     data.linkedAccounts = linked;
   },
 
-  // === 画像生成 ===
+  // === 画像生成 (增强版) ===
   _buildPortrait(data) {
     const tags = [];
     const lines = [];
 
     // 个人信息标签
     if (data.gender) {
-        const g = data.gender.toLowerCase();
-        if (g === 'male' || g === '男性' || g === '男') tags.push('👨 男');
-        else if (g === 'female' || g === '女性' || g === '女') tags.push('👩 女');
-        else tags.push('👤 ' + data.gender);
-      }
-    if (data.relationship) tags.push({ 'Single':'💔 单身','In a relationship':'💑 恋爱中','Married':'💍 已婚','Engaged':'💍 订婚','Divorced':'💔 离异','Widowed':'🕊️ 丧偶' }[data.relationship] || `💕 ${data.relationship}`);
+      const g = data.gender.toLowerCase();
+      if (g === 'male' || g === '男性' || g === '男') tags.push('👨 男');
+      else if (g === 'female' || g === '女性' || g === '女') tags.push('👩 女');
+      else tags.push('👤 ' + data.gender);
+    }
+    if (data.relationship) {
+      const relMap = {
+        'Single':'💔 单身','In a relationship':'💑 恋爱中','Married':'💍 已婚',
+        'Engaged':'💍 订婚','Divorced':'💔 离异','Widowed':'🕊️ 丧偶',
+        '单身':'💔 单身','恋爱中':'💑 恋爱中','已婚':'💍 已婚',
+        '订婚':'💍 订婚','离异':'💔 离异','丧偶':'🕊️ 丧偶',
+      };
+      tags.push(relMap[data.relationship] || `💕 ${data.relationship}`);
+    }
     if (data.birthday) {
       const age = data.birthday.match(/\d{4}/);
       if (age) {
@@ -594,17 +602,33 @@ const Extractor = {
     if (data.friends) lines.push(`采集到好友: ${data.friends.length} 人`);
     if (data.posts) lines.push(`采集到帖子: ${data.posts.length} 条`);
 
-    // Bio 摘要
+    // Bio + 兴趣词提取
+    data.interestWords = [];
     if (data.bio) {
       const bioShort = data.bio.length > 80 ? data.bio.slice(0, 80) + '…' : data.bio;
       lines.push(`简介: ${bioShort}`);
-      // Extract keywords from bio
       const stopWords = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','with','by','from','is','am','are','was','were','be','been','being','have','has','had','do','does','did','will','would','could','should','may','might','shall','can','need','dare','ought','used','this','that','these','those','i','my','me','we','our','you','your','he','him','his','she','her','it','its','they','them','their','not','no','nor','so','if','as','up','out','about','who','what','when','where','why','how','all','each','every','both','few','more','most','some','any','none','just','also','very','too','really','here','there','now','then','only','own','same','like','是','的','了','在','有','和','就','不','人','都','一','一个','上','也','很','到','说','要','去','你','会','着','没有','看','好','自己']);
       const words = data.bio.toLowerCase().replace(/[^a-z\u4e00-\u9fff\s-]/g, '').split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
       const freq = {};
       words.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
-      const topKeywords = Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0, 5).map(x => x[0]);
-      if (topKeywords.length > 0) lines.push(`兴趣词: ${topKeywords.join(', ')}`);
+      data.interestWords = Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0, 10).map(x => x[0]);
+      if (data.interestWords.length > 0) {
+        tags.push(...data.interestWords.slice(0, 3).map(w => `🏷️ ${w}`));
+        lines.push(`兴趣词: ${data.interestWords.join(', ')}`);
+      }
+    }
+
+    // 从帖子中提取兴趣词
+    if (data.posts && data.posts.length >= 3) {
+      const postText = data.posts.map(p => p.text).join(' ');
+      const stopWords = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','with','by','from','is','it','its','this','that','was','were','be','been','have','has','had','do','does','did','will','would','could','should','may','might','i','my','me','we','our','you','your','he','him','his','she','her','they','them','their','not','no','nor','so','if','as','up','out','about','just','also','very','too','really','here','there','now','then','only','own','same','like','是','的','了','在','有','和','就','不','人','都','一','一个','上','也','很','到','说','要','去','你','会','着','没有','看','好','自己','这','那','什么','因为','所以','但是','可以','知道']);
+      const words = postText.toLowerCase().replace(/[^a-z\u4e00-\u9fff\s]/g, '').split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+      const freq = {};
+      words.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
+      const postKeywords = Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0, 10).map(x => x[0]);
+      // Merge with existing interest words
+      const combined = new Set([...data.interestWords, ...postKeywords]);
+      data.interestWords = Array.from(combined).slice(0, 15);
     }
 
     // Linked accounts
@@ -612,10 +636,85 @@ const Extractor = {
       lines.push(`关联账号: ${data.linkedAccounts.map(a => `${a.platform}: ${a.handle}`).join(' | ')}`);
     }
 
+    // ===== 活跃时间分析 =====
+    data.activityInsight = '';
+    if (data.posts && data.posts.length >= 2) {
+      // We don't have real timestamps reliably from DOM, estimate based on what we have
+      const postCount = data.posts.length;
+      if (postCount >= 5) data.activityInsight = `📊 采集到 ${postCount} 条帖子，近期活跃度较高`;
+      else if (postCount >= 2) data.activityInsight = `📊 采集到 ${postCount} 条帖子`;
+    }
+
+    // ===== 智能破冰话术生成 =====
+    data.icebreakers = generateIcebreakers(data);
+
     data.portrait = { tags, lines };
     return data.portrait;
   },
 };
+
+// ============================================================
+//  🎯 智能破冰话术引擎
+// ============================================================
+function generateIcebreakers(data) {
+  const msgs = [];
+  const name = data.name || '你';
+
+  // 1. 基于位置
+  if (data.location) {
+    const loc = data.location.split(',')[0].trim();
+    msgs.push(`嗨～看到你也在${loc}，好巧！交个朋友？😊`);
+    msgs.push(`Hey! 我也在${loc}附近活动，感觉挺有缘的 🙃`);
+  }
+
+  // 2. 基于工作
+  if (data.work) {
+    const w = data.work.split(';')[0].trim();
+    msgs.push(`你在${w}工作？感觉好酷！请问那边工作氛围怎么样？🤔`);
+    msgs.push(`冒昧问一下，在${w}工作是什么样的体验？我一直挺好奇的 🤗`);
+  }
+
+  // 3. 基于教育
+  if (data.education) {
+    const e = data.education.split(';')[0].trim();
+    msgs.push(`你是${e}毕业的？校友诶！好巧 🙌`);
+  }
+
+  // 4. 基于兴趣词
+  if (data.interestWords && data.interestWords.length > 0) {
+    const w = data.interestWords[0];
+    if (!msgs.some(m => m.includes(w))) {
+      msgs.push(`看到你也喜欢${w}！我也是，要不要聊聊？😄`);
+    }
+  }
+
+  // 5. 基于生日/年龄
+  if (data.birthday) {
+    const ageMatch = data.birthday.match(/\d{4}/);
+    if (ageMatch) {
+      const age = new Date().getFullYear() - parseInt(ageMatch[0]);
+      if (age >= 18 && age <= 35) {
+        msgs.push(`Hey! 看起来我们年纪差不多，想认识一下～🙋‍♂️`);
+      }
+    }
+  }
+
+  // 6. 基于性别 + 通用
+  const isFemale = data.gender && (data.gender.toLowerCase().includes('女性') || data.gender.toLowerCase().includes('female') || data.gender === '女');
+  if (isFemale && data.location) {
+    msgs.push(`嗨～我看到你在${data.location.split(',')[0].trim()}，感觉你很有趣的样子，想认识你 😊`);
+  }
+
+  // 7. 通用保底
+  if (msgs.length < 2) {
+    msgs.push(`Hey! 我承认这有点突然，但看到你的主页感觉你很有趣，想认识一下 🙃`);
+    msgs.push(`我平时一般不随便加人的，但你的主页看起来很有意思，所以打个招呼 😄`);
+  }
+
+  // 去重 + 限制5条
+  return [...new Set(msgs)].slice(0, 5);
+}
+
 
 // ============================================================
 //  🖼️ UI 渲染
@@ -637,6 +736,7 @@ function render(data) {
 function htmlPanel(data) {
   const p = data.portrait || { tags: [], lines: [] };
   const hasData = data.name || data.uid;
+  const iceCount = (data.icebreakers || []).length;
 
   return `
 <div class="hdr">
@@ -649,6 +749,7 @@ function htmlPanel(data) {
 <div class="body">
   <div class="tabs">
     <button class="act" data-tab="portrait">🎯 画像</button>
+    <button data-tab="ice">🎯 破冰${iceCount ? ` (${iceCount})` : ''}</button>
     <button data-tab="info">📋 详情</button>
     <button data-tab="friends">👥 好友${data.friends ? ` (${data.friends.length})` : ''}</button>
     <button data-tab="posts">📰 帖子${data.posts ? ` (${data.posts.length})` : ''}</button>
@@ -674,9 +775,30 @@ function tabContent(tab, data) {
     case 'friends': return tabFriends(data);
     case 'posts': return tabPosts(data);
     case 'links': return tabLinks(data);
+    case 'ice': return tabIce(data);
     case 'saved': return tabSaved(data);
     default: return '';
   }
+}
+
+function tabIce(data) {
+  const ice = data.icebreakers || [];
+  if (!ice.length) return `<div class="emp"><span>🎯</span>暂无破冰话术<br><small style="color:#8AB4D6">需要先采集目标资料</small></div>`;
+
+  let h = `<div class="card" style="background:#E8F4FD;border-color:#87CEEB;">
+    <h3 style="color:#5BA3C9">🎯 智能破冰话术</h3>
+    <div style="font-size:11px;color:#8AB4D6;margin-bottom:10px;">基于目标画像自动生成，点击复制直接使用</div>`;
+  ice.forEach((msg, i) => {
+    h += `<div style="background:white;border:1px solid #D4EDFB;border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer;" class="v6-copy-ice" data-ice="${escHtml(msg)}">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <span style="color:#87CEEB;font-weight:700;font-size:13px;">#${i+1}</span>
+        <span style="flex:1;color:#3A5A7A;font-size:12px;line-height:1.5;">${escHtml(msg)}</span>
+        <span style="color:#D4EDFB;font-size:11px;flex-shrink:0;">📋 复制</span>
+      </div>
+    </div>`;
+  });
+  h += `</div>`;
+  return h;
 }
 
 function tabPortrait(data, p) {
@@ -705,6 +827,28 @@ function tabPortrait(data, p) {
     h += `<div class="card"><h3>📋 目标画像</h3>`;
     h += p.lines.map(l => `<div class="row"><span class="val">${l}</span></div>`).join('');
     h += `</div>`;
+  }
+
+  // 兴趣词云
+  if (data.interestWords && data.interestWords.length > 0) {
+    h += `<div class="card"><h3>🏷️ 兴趣标签</h3><div>`;
+    data.interestWords.forEach(w => {
+      h += `<span class="pill act">${escHtml(w)}</span> `;
+    });
+    h += `</div></div>`;
+  }
+
+  // 活跃度
+  if (data.activityInsight) {
+    h += `<div class="card"><h3>⏰ 活跃分析</h3><div class="val">${data.activityInsight}</div></div>`;
+  }
+
+  // 破冰快捷入口
+  if (data.icebreakers && data.icebreakers.length > 0) {
+    h += `<div class="card" style="background:#E8F4FD;border-color:#87CEEB;cursor:pointer;" id="v6-goto-ice">
+      <h3 style="color:#5BA3C9">🎯 智能破冰话术</h3>
+      <div style="font-size:11px;color:#8AB4D6;">点击查看 ${data.icebreakers.length} 条定制开场白 →</div>
+    </div>`;
   }
 
   // 简介
@@ -962,7 +1106,33 @@ function bindEvents(data) {
       }
       return;
     }
+    // Icebreaker: copy text
+    const iceEl = e.target.closest('.v6-copy-ice');
+    if (iceEl) {
+      const text = iceEl.dataset.ice;
+      if (text) {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(() => {
+            const label = iceEl.querySelector('span:last-child');
+            if (label) { label.textContent = '✅ 已复制!'; setTimeout(() => { label.textContent = '📋 复制'; }, 1500); }
+            setStatus('📋 已复制到剪贴板');
+          });
+        } else fallbackCopy(text);
+      }
+      return;
+    }
   };
+
+  // Click on icebreaker card in portrait -> switch tab
+  const gotoIce = document.getElementById('v6-goto-ice');
+  if (gotoIce) {
+    gotoIce.onclick = () => {
+      document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('act'));
+      const tabBtn = document.querySelector('.tabs button[data-tab="ice"]');
+      if (tabBtn) { tabBtn.classList.add('act'); activeTab = 'ice'; }
+      document.getElementById('v6-content').innerHTML = tabIce(data);
+    };
+  }
 
   // Drag header
   const hdr = document.querySelector('.hdr');
