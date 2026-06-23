@@ -410,25 +410,55 @@
     for (const s of ['img.x1b0d499.x1dofw5p','image[alt*="profile"]','circle image','img.x1rg5ohu']) {
       const el = document.querySelector(s); if (el) { let src=el.getAttribute('xlink:href')||el.src||''; src=src.replace(/\/[ps]\d+x\d+\//,'/p960x960/'); data.avatarUrl=src; break; }
     }
-    data.uid = extractFBUID();
-    for (const el of document.querySelectorAll('span,div.x1n2onr6>div.x1n2onr6 span,div[dir="auto"] span')) {
-      const t = el.textContent.trim();
-      if (t.startsWith('Lives in')) data.location=t.replace('Lives in ','').trim();
-      else if (t.startsWith('From')) data.hometown=t.replace('From ','').trim();
-      else if (t.startsWith('Works at')) data.work=t.replace('Works at ','').trim();
-      else if (t.startsWith('Studied at')||t.startsWith('Went to')) data.education=t.replace(/^(Studied at|Went to) /,'').trim();
-      else if (['Single','In a relationship','Married','Engaged','Divorced','Widowed',"It's complicated"].includes(t)) data.relationship=t;
+        data.uid = extractFBUID();
+
+    // ====== 全面文本扫描 ======
+    const allText = document.body.innerText;
+
+    const li = allText.match(/Lives in\s+([^\n,]+)/i);
+    if (li) data.location = li[1].trim();
+
+    const fm = allText.match(/(?:^|\n)From\s+([^\n,]+)/i);
+    if (fm) data.hometown = fm[1].trim();
+
+    const wk = allText.match(/Works at\s+([^\n,]+)/i);
+    if (wk) data.work = wk[1].trim();
+
+    const ed = allText.match(/(?:Studied at|Went to)\s+([^\n,]+)/i);
+    if (ed) data.education = ed[1].trim();
+
+    const relStatuses = ['Single','In a relationship','Married','Engaged','Divorced','Widowed',"It's complicated"];
+    for (const rs of relStatuses) {
+      if (allText.includes(rs)) { data.relationship = rs; break; }
     }
-    const fc = document.body.innerText.match(/([\d,]+)\s*(?:friends?|mutual friends?)/i);
-    if (fc) data.friends=fc[1];
-    const bd = document.body.innerText.match(/Birthday\s*:?\s*(\w+\s+\d{1,2}(?:,\s*\d{4})?)/i);
-    if (bd) data.birthday=bd[1];
-    const fol = document.body.innerText.match(/([\d,.KkMmbB]+)\s*(?:follower|followers)/i);
-    if (fol) data.followers=fol[1];
-    for (const el of document.querySelectorAll('[data-pagelet="Profile"] p,div.x1n2onr6>div>span>span>span')) {
-      const t=el.textContent.trim(); if (t.length>15&&t.length<500&&!t.startsWith('Lives in')&&!t.startsWith('Works at')&&!t.startsWith('From')&&!t.startsWith('Studied')&&!t.startsWith('Went to')) { data.bio=t; break; }
+
+    const fc = allText.match(/([\d,]+)\s*(?:friends?|mutual friends?)/i);
+    if (fc) data.friends = fc[1];
+
+    const bd = allText.match(/Birthday\s*:?\s*(\w+\s+\d{1,2}(?:,\s*\d{4})?)/i);
+    if (bd) data.birthday = bd[1];
+    if (!data.birthday) {
+      const bd2 = allText.match(/\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:,\s*\d{4})?\b/);
+      if (bd2) data.birthday = bd2[0];
     }
-    data.url=url; data.profileId=url.match(/facebook\.com\/([^/?]+)/)?.[1]||'';
+
+    const fol = allText.match(/([\d.,KkMmbB]+)\s*(?:follower|followers)/i);
+    if (fol) data.followers = fol[1];
+
+    // Bio from page text
+    const sections = document.body.innerText.split(/\n{2,}/);
+    for (const sec of sections) {
+      const t = sec.trim();
+      if (t.length > 20 && t.length < 500
+        && !t.startsWith('Lives in') && !t.startsWith('Works at')
+        && !t.startsWith('From') && !t.startsWith('Studied')
+        && !t.startsWith('Went to') && !t.startsWith('Birthday')
+        && !t.includes('mutual friends') && !t.includes('Add Friend')
+        && !t.includes('Message') && !t.includes('Following')) {
+        data.bio = t.slice(0, 300);
+        break;
+      }
+    }data.profileId=url.match(/facebook\.com\/([^/?]+)/)?.[1]||'';
     data.keywords = extractKeywords(data);
     data.mutualFriends = extractMutualFriends();
     data.posts = extractTimelinePosts();
