@@ -4,6 +4,8 @@
 // @version      5.1
 // @description  Facebook 个人信息收集辅助工具 — 授权渗透测试专用 🎀
 // @author       阿趣 🎀
+// @updateURL    https://github.com/Aqu399/fb-osint-companion/raw/main/fb-osint-helper.user.js
+// @downloadURL  https://github.com/Aqu399/fb-osint-companion/raw/main/fb-osint-helper.user.js
 // @match        https://www.facebook.com/*
 // @match        https://facebook.com/*
 // @match        https://mbasic.facebook.com/*
