@@ -806,12 +806,23 @@ function tabSaved() {
   let h = `<div class="card"><h3>💾 已保存 (${all.length})</h3>`;
   all.forEach(d => {
     const time = d.savedAt ? new Date(d.savedAt).toLocaleString() : '';
-    h += `<div class="row" style="cursor:pointer" data-load="${d.uid}">
-      <span class="val" style="flex:1"><strong>${escHtml(d.name || '未知')}</strong> ${d.uid ? `<span class="badge">${d.uid}</span>` : ''}</span>
-      <span class="badge">${time}</span>
+    const portrait = d.portrait || {};
+    const tags = (portrait.tags || []).slice(0, 3).join(' ');
+    const lines = (portrait.lines || []).slice(0, 2).map(l => escHtml(l)).join('<br>');
+    h += `<div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-weight:700;color:#58a6ff;cursor:pointer;font-size:13px;" class="v6-open-url" data-url="${escHtml(d.url || '')}">${escHtml(d.name || '未知')} ↗</span>
+        <span style="color:#484f58;font-size:10px;">${time}</span>
+      </div>
+      ${tags ? `<div style="margin-bottom:4px;">${tags}</div>` : ''}
+      ${lines ? `<div style="font-size:11px;color:#8b949e;line-height:1.4;margin-bottom:6px;">${lines}</div>` : ''}
+      <div style="display:flex;gap:4px;">
+        <button class="v6-load-saved" data-uid="${escHtml(d.uid)}" style="flex:1;background:#21262d;border:1px solid #30363d;border-radius:6px;color:#8b949e;cursor:pointer;font-size:10px;padding:4px;font-family:inherit;">📂 加载到面板</button>
+        <button class="v6-del-saved" data-uid="${escHtml(d.uid)}" style="background:none;border:none;color:#f85149;cursor:pointer;font-size:14px;padding:2px 8px;">✕</button>
+      </div>
     </div>`;
   });
-  h += `<div class="row"><button id="v6-clear-all" style="background:none;border:none;color:#f85149;cursor:pointer;font-size:11px;padding:4px 0;">🗑️ 清空全部</button></div>`;
+  h += `<div style="text-align:center;padding:8px 0;"><button id="v6-clear-all" style="background:none;border:none;color:#f85149;cursor:pointer;font-size:11px;">🗑️ 清空全部</button></div>`;
   h += `</div>`;
   return h;
 }
@@ -899,18 +910,7 @@ function bindEvents(data) {
     };
   });
 
-  // Load saved record
-  document.querySelectorAll('[data-load]').forEach(el => {
-    el.onclick = () => {
-      const saved = Store.get(el.dataset.load);
-      if (saved) {
-        data = saved;
-        document.getElementById('v6-content').innerHTML = tabContent(activeTab, saved);
-        document.querySelector('.hdr .ttl small').textContent = '· ' + (saved.name || '');
-        setStatus('📂 已加载保存的记录');
-      }
-    };
-  });
+
 
   // Clear all saved
   const clearBtn = document.getElementById('v6-clear-all');
@@ -919,6 +919,38 @@ function bindEvents(data) {
       GM_setValue(CONFIG.saveKey, '[]');
       document.getElementById('v6-content').innerHTML = tabSaved();
       setStatus('🗑️ 已清空');
+    }
+  };
+
+  // 已存 Tab 事件委托：打开URL / 加载记录 / 删除
+  document.getElementById('v6-content').onclick = (e) => {
+    const openBtn = e.target.closest('.v6-open-url');
+    if (openBtn) {
+      const url = openBtn.dataset.url;
+      if (url) window.open(url, '_blank');
+      return;
+    }
+    const loadBtn = e.target.closest('.v6-load-saved');
+    if (loadBtn) {
+      const saved = Store.get(loadBtn.dataset.uid);
+      if (saved) {
+        data = saved;
+        document.getElementById('v6-content').innerHTML = tabContent(activeTab, saved);
+        document.querySelector('.hdr .ttl small').textContent = '· ' + (saved.name || '');
+        setStatus('📂 已加载保存的记录');
+        e.stopPropagation();
+      }
+      return;
+    }
+    const delBtn = e.target.closest('.v6-del-saved');
+    if (delBtn) {
+      const uid = delBtn.dataset.uid;
+      if (uid && confirm('删除这条记录？')) {
+        Store.delete(uid);
+        document.getElementById('v6-content').innerHTML = tabSaved();
+        setStatus('🗑️ 已删除');
+      }
+      return;
     }
   };
 
