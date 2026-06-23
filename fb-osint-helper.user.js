@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         FB 信息助手
 // @namespace    https://github.com/Aqu399
-// @version      5.0
+// @version      5.1
 // @description  Facebook 个人信息收集辅助工具 — 授权渗透测试专用 🎀
 // @author       阿趣 🎀
 // @match        https://www.facebook.com/*
@@ -689,10 +689,12 @@
       if(copyText(l.join('\n'))) showStatus('已复制 ✅');
     };
 
-    document.getElementById('osint-save').onclick = () => { saveProfile(data); showStatus('已保存 💾'); };
+    for (const el of document.querySelectorAll('#fb-osint-panel [id$="save"]')) { el.onclick = () => { saveProfile(data); showStatus('已保存 💾'); }; }
     document.getElementById('osint-export-json').onclick = () => exportJSON();
     document.getElementById('osint-export-csv').onclick = () => exportCSV();
     document.getElementById('osint-export-table').onclick = () => exportTableCSV();
+    const bottomJson = document.getElementById('osint-export-json-bottom'); if(bottomJson) bottomJson.onclick = () => exportJSON();
+    const bottomCsv = document.getElementById('osint-export-csv-bottom'); if(bottomCsv) bottomCsv.onclick = () => exportCSV();
 
     for (const btn of panel.querySelectorAll('.copy-btn')) {
       btn.onclick = () => { const t=btn.getAttribute('data-copy'); if(copyText(t)){btn.textContent='✅';btn.classList.add('copied');setTimeout(()=>{btn.textContent='📋';btn.classList.remove('copied');},1500);}};
@@ -701,35 +703,158 @@
 
   // ==================== 主页 Tab ====================
   function renderProfileTab(data, changes) {
-    const f = [
-      {l:'主页链接',v:data.url},{l:'FB UID',v:data.uid},{l:'姓名',v:data.name},
-      {l:'所在地',v:data.location},{l:'家乡',v:data.hometown},{l:'工作',v:data.work},
-      {l:'教育',v:data.education},{l:'感情状态',v:data.relationship},{l:'生日',v:data.birthday},
-      {l:'好友数',v:data.friends},{l:'粉丝',v:data.followers},{l:'简介',v:data.bio},
-    ];
-    let ah='';
-    if(data.avatarUrl) ah=`<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;">
-      <img class="profile-avatar" src="${data.avatarUrl}" id="osint-avatar-img" />
-      <div><div style="font-size:12px;font-weight:700;margin-bottom:4px;color:#3A5A7A;">📸 头像</div>
-      <div class="avatar-actions">
-        <button id="osint-dl-avatar">⬇️ 下载</button>
-        <button id="osint-ri-google">🔍 谷歌</button>
-        <button id="osint-ri-tineye">🔍 TinEye</button>
-        <button id="osint-ri-yandex">🔍 Yandex</button>
-      </div></div></div>`;
-    let ch='';
-    if(changes) ch=`<div style="background:#FFF3CD;border:1px solid #FFC107;border-radius:10px;padding:8px;margin-bottom:8px;font-size:11px;color:#856404;">⚠️ 信息有变化！<a href="#" id="osint-goto-changes" style="color:#5BA3C9;text-decoration:underline;margin-left:4px;">查看 →</a></div>`;
-    const fh = f.filter(x=>x.v).map(x => {
-      const ic = changes && changes[x.l];
-      return `<div class="field-group"${ic?' style="border-left:3px solid #FFC107;padding-left:5px;"':''}>
-        <div class="field-label">${x.l}</div>
-        <div class="field-value"><span>${x.v.length>80?x.v.slice(0,80)+'…':x.v}${ic?' ⚠️':''}</span><button class="copy-btn" data-copy="${x.v.replace(/"/g,'&quot;')}">📋</button></div>
+    // ====== 全部信息在一个页面展示 ======
+    let html = '';
+
+    // 大型保存按钮
+    html += '<div style="display:flex;gap:6px;margin-bottom:10px;">';
+    html += '<button id="osint-save" style="flex:1;padding:10px;background:#87CEEB;border:none;border-radius:12px;color:white;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='#6BB5D9'" onmouseout="this.style.background='#87CEEB'">💾 保存此主页资料</button>';
+    html += '<button id="osint-copy-all" style="padding:10px 14px;background:white;border:1px solid #D4EDFB;border-radius:12px;color:#5BA3C9;cursor:pointer;font-size:13px;transition:all 0.2s;">📋 复制</button>';
+    html += '</div>';
+
+    // 变更提示
+    if(changes) html+='<div style="background:#FFF3CD;border:1px solid #FFC107;border-radius:10px;padding:8px;margin-bottom:10px;font-size:11px;color:#856404;">⚠️ 信息有变化！<a href="#" id="osint-goto-changes" style="color:#5BA3C9;text-decoration:underline;margin-left:4px;">查看 →</a></div>';
+
+    // ====== 头像区 ======
+    if(data.avatarUrl){
+      html+=`<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;background:white;border:1px solid #D4EDFB;border-radius:14px;padding:12px;">
+        <img class="profile-avatar" src="${data.avatarUrl}" id="osint-avatar-img" style="width:64px;height:64px;border-radius:50%;border:3px solid #87CEEB;object-fit:cover;cursor:pointer;" />
+        <div style="flex:1;">
+          <div style="font-size:16px;font-weight:700;color:#3A5A7A;margin-bottom:4px;">${data.name||'未知'}</div>
+          <div class="avatar-actions">
+            <button id="osint-dl-avatar">⬇️ 下载</button>
+            <button id="osint-ri-google">🔍 谷歌搜图</button>
+            <button id="osint-ri-tineye">🔍 TinEye</button>
+            <button id="osint-ri-yandex">🔍 Yandex</button>
+          </div>
+        </div>
       </div>`;
-    }).join('');
-    return ch + ah + (data.name?`<div class="profile-name">${data.name}</div>`:'') + fh;
+    } else if(data.name){
+      html+=`<div style="font-size:18px;font-weight:700;color:#3A5A7A;margin-bottom:12px;padding:8px 0;">${data.name}</div>`;
+    }
+
+    // ====== 基本信息 ======
+    const fields = [
+      ['📎 主页链接',data.url], ['🆔 FB UID',data.uid], ['📍 所在地',data.location],
+      ['🏠 家乡',data.hometown], ['💼 工作',data.work], ['🎓 教育',data.education],
+      ['💕 感情状态',data.relationship], ['🎂 生日',data.birthday],
+      ['👥 好友数',data.friends], ['⭐ 粉丝',data.followers],
+    ];
+    const hasFields = fields.filter(f=>f[1]);
+    if(hasFields.length){
+      html+=`<div style="background:white;border:1px solid #D4EDFB;border-radius:14px;padding:10px 12px;margin-bottom:8px;">`;
+      html+=`<div style="font-size:11px;color:#8AB4D6;font-weight:600;margin-bottom:6px;">📋 基本资料</div>`;
+      hasFields.forEach(([label,val])=>{
+        const ic=changes&&changes[label.replace(/^[^\s]+\s/,'')];
+        html+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid #F0F8FF;${ic?'border-left:3px solid #FFC107;padding-left:6px;':''}">
+          <span style="font-size:11px;color:#8AB4D6;min-width:70px;">${label}</span>
+          <span style="flex:1;font-size:12px;color:#3A5A7A;text-align:right;word-break:break-word;margin:0 6px;">${val}${ic?' ⚠️':''}</span>
+          <button class="copy-btn" style="background:none;border:none;color:#87CEEB;cursor:pointer;font-size:12px;padding:2px 6px;border-radius:6px;" data-copy="${val.replace(/"/g,'&quot;')}">📋</button>
+        </div>`;
+      });
+      html+=`</div>`;
+    }
+
+    // 简介
+    if(data.bio){
+      const ic=changes&&changes.bio;
+      html+=`<div style="background:white;border:1px solid #D4EDFB;border-radius:14px;padding:10px 12px;margin-bottom:8px;${ic?'border-left:3px solid #FFC107;':''}">
+        <div style="font-size:11px;color:#8AB4D6;font-weight:600;margin-bottom:4px;">📝 简介${ic?' ⚠️':''}</div>
+        <div style="font-size:12px;color:#3A5A7A;line-height:1.5;word-break:break-word;">${data.bio}</div>
+      </div>`;
+    }
+
+    // ====== 关键词 ======
+    const kws=data.keywords||[];
+    if(kws.length){
+      html+=`<div style="background:white;border:1px solid #D4EDFB;border-radius:14px;padding:10px 12px;margin-bottom:8px;">
+        <div style="font-size:11px;color:#8AB4D6;font-weight:600;margin-bottom:5px;">🔑 关键词 <span style="font-weight:400;">(${kws.length})</span></div>
+        <div>${kws.map(k=>`<span class="keyword-chip" data-kw="${k.replace(/"/g,'&quot;')}">${k}</span>`).join('')}</div>
+      </div>`;
+    }
+
+    // ====== 关联账号 ======
+    const accs=data.linkedAccounts||[];
+    if(accs.length){
+      html+=`<div style="background:white;border:1px solid #D4EDFB;border-radius:14px;padding:10px 12px;margin-bottom:8px;">
+        <div style="font-size:11px;color:#8AB4D6;font-weight:600;margin-bottom:5px;">🔗 关联账号</div>`;
+      accs.forEach(a=>{
+        html+=`<div class="list-item" style="background:#F0F8FF;padding:5px 8px;border-radius:8px;margin-bottom:3px;border:none;">
+          <span class="li-name">${a.platform}: <strong>${a.handle}</strong></span>
+          <a class="li-link" href="${a.url}" target="_blank" style="color:#87CEEB;text-decoration:none;">→</a>
+        </div>`;
+      });
+      html+=`</div>`;
+    }
+
+    // ====== 联系方式 ======
+    const ctc=data.contactInfo||[];
+    if(ctc.length){
+      html+=`<div style="background:white;border:1px solid #D4EDFB;border-radius:14px;padding:10px 12px;margin-bottom:8px;">
+        <div style="font-size:11px;color:#8AB4D6;font-weight:600;margin-bottom:5px;">📞 联系方式</div>`;
+      ctc.forEach(c=>{
+        html+=`<div class="list-item" style="background:#F0F8FF;padding:5px 8px;border-radius:8px;margin-bottom:3px;border:none;">
+          <span class="li-name">${c.type}: <strong>${c.value}</strong></span>
+          <button class="copy-btn" style="background:none;border:none;color:#87CEEB;cursor:pointer;font-size:12px;" data-copy="${c.value.replace(/"/g,'&quot;')}">📋</button>
+        </div>`;
+      });
+      html+=`</div>`;
+    }
+
+    // ====== 共同好友 ======
+    const mfs=data.mutualFriends||[];
+    if(mfs.length){
+      html+=`<div style="background:white;border:1px solid #D4EDFB;border-radius:14px;padding:10px 12px;margin-bottom:8px;">
+        <div style="font-size:11px;color:#8AB4D6;font-weight:600;margin-bottom:5px;">🤝 共同好友 (${mfs.length})</div>`;
+      mfs.slice(0,8).forEach(m=>{
+        const bg=m.count>0?` <span style="color:#87CEEB;">(${m.count})</span>`:'';
+        html+=`<div class="list-item" style="background:#F0F8FF;padding:4px 8px;border-radius:8px;margin-bottom:2px;border:none;">
+          <span class="li-name">${m.text}${bg}</span>
+          ${m.url?`<a class="li-link" href="${m.url}" target="_blank" style="color:#87CEEB;">→</a>`:''}
+        </div>`;
+      });
+      if(mfs.length>8) html+=`<div style="font-size:10px;color:#8AB4D6;margin-top:3px;">还有 ${mfs.length-8} 个...</div>`;
+      html+=`</div>`;
+    }
+
+    // ====== 最近帖子 ======
+    const posts=data.posts||[];
+    if(posts.length){
+      html+=`<div style="background:white;border:1px solid #D4EDFB;border-radius:14px;padding:10px 12px;margin-bottom:8px;">
+        <div style="font-size:11px;color:#8AB4D6;font-weight:600;margin-bottom:5px;">📰 最近帖子 (${posts.length})</div>`;
+      posts.slice(0,5).forEach(p=>{
+        html+=`<div style="font-size:11px;padding:4px 0;border-bottom:1px solid #F0F8FF;color:#3A5A7A;">
+          <div>${p.text}${p.location?` <span style="color:#7BC99A;">📍${p.location}</span>`:''}</div>
+          ${p.timestamp?`<div style="color:#8AB4D6;font-size:10px;">🕐 ${p.timestamp}</div>`:''}
+        </div>`;
+      });
+      html+=`</div>`;
+    }
+
+    // ====== 社交圈 ======
+    const su=data.friendSuggestions||[];
+    if(su.length){
+      html+=`<div style="background:white;border:1px solid #D4EDFB;border-radius:14px;padding:10px 12px;margin-bottom:8px;">
+        <div style="font-size:11px;color:#8AB4D6;font-weight:600;margin-bottom:5px;">💡 可能认识 (${su.length})</div>`;
+      su.slice(0,6).forEach(s=>{
+        html+=`<div class="list-item" style="background:#F0F8FF;padding:4px 8px;border-radius:8px;margin-bottom:2px;border:none;">
+          <span class="li-name">👤 ${s.name}</span>
+          <a class="li-link" href="${s.url}" target="_blank" style="color:#87CEEB;">→</a>
+        </div>`;
+      });
+      html+=`</div>`;
+    }
+
+    // ====== 底部再次保存 ======
+    html+=`<div style="display:flex;gap:6px;margin-top:6px;padding-top:8px;border-top:1px solid #D4EDFB;">
+      <button id="osint-save-bottom" style="flex:1;padding:9px;background:#87CEEB;border:none;border-radius:10px;color:white;font-size:13px;font-weight:600;cursor:pointer;">💾 保存此主页</button>
+      <button id="osint-export-json-bottom" style="padding:9px 14px;background:white;border:1px solid #D4EDFB;border-radius:10px;color:#5BA3C9;cursor:pointer;font-size:12px;">📄 JSON</button>
+      <button id="osint-export-csv-bottom" style="padding:9px 14px;background:white;border:1px solid #D4EDFB;border-radius:10px;color:#5BA3C9;cursor:pointer;font-size:12px;">📊 CSV</button>
+    </div>`;
+
+    return html;
   }
 
-  // ==================== 关键词 Tab ====================
   function renderKeysTab(data) {
     const kws=data.keywords||[];
     if(!kws.length) return '<div style="text-align:center;padding:30px;color:#8AB4D6;"><div style="font-size:36px;margin-bottom:10px;">🔑</div>暂无关键词</div>';
