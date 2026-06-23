@@ -708,7 +708,7 @@
 
     // 大型保存按钮
     html += '<div style="display:flex;gap:6px;margin-bottom:10px;">';
-    html += '<button id="osint-save" style="flex:1;padding:10px;background:#87CEEB;border:none;border-radius:12px;color:white;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='#6BB5D9'" onmouseout="this.style.background='#87CEEB'">💾 保存此主页资料</button>';
+    html += '<button id="osint-save" style="flex:1;padding:10px;background:#87CEEB;border:none;border-radius:12px;color:white;font-size:14px;font-weight:700;cursor:pointer;">💾 保存此主页资料</button>';
     html += '<button id="osint-copy-all" style="padding:10px 14px;background:white;border:1px solid #D4EDFB;border-radius:12px;color:#5BA3C9;cursor:pointer;font-size:13px;transition:all 0.2s;">📋 复制</button>';
     html += '</div>';
 
