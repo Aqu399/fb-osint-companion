@@ -5,7 +5,10 @@
 // @description  FB 信息收集工具 — 授权渗透测试专用 | UID·GraphAPI·重叠好友展开·共同群组·照片扫描·变更追踪·PYMK·联系方式·活动
 // @author       c0d3
 // @match        https://www.facebook.com/*
+// @match        https://facebook.com/*
 // @match        https://mbasic.facebook.com/*
+// @match        https://m.facebook.com/*
+// @match        https://*.facebook.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=facebook.com
 // @grant        GM_setClipboard
 // @grant        GM_addStyle
