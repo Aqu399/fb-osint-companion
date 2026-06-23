@@ -657,68 +657,95 @@ const Extractor = {
 //  🎯 智能破冰话术引擎
 // ============================================================
 function generateIcebreakers(data) {
-  // 真人社交破冰话术库
-  // 核心原则：不讲具体资料（不暴露偷窥痕迹），只表达随性/真诚/有趣
-  // 分组：根据目标资料微调用语氛围，但绝不直接引用字段值
+  const msgs = [];
   const isFemale = data.gender && (data.gender.toLowerCase().includes('女性') || data.gender.toLowerCase().includes('female') || data.gender === '女');
 
-  // 通用话术池（不分男女/资料）
-  const pool = [
+  const loc = data.location ? data.location.split(',')[0].trim() : null;
+  const work = data.work ? data.work.split(';')[0].trim() : null;
+  const edu = data.education ? data.education.split(';')[0].trim() : null;
+  const interest = data.interestWords && data.interestWords.length > 0 ? data.interestWords.slice(0, 2) : null;
+
+  // ===== 基于位置的切入（随机选一种表述） =====
+  if (loc) {
+    const locLines = [
+      `Hello from a neighbor! I'm around ${loc} too. Random hi 🙃`,
+      `Hey! I noticed you're in ${loc} — small world! I'm nearby as well 😄`,
+      `Okay this might sound random but I saw you're in ${loc} and thought I'd say hey 👋`,
+      `${loc} represent! 🙌 Just browsing and saw your profile — hi!`,
+      `No way, you're in ${loc}? I'm around there too! What are the odds 😂`,
+      `Just scrolling and saw you're in ${loc}... hello from a neighbor! 🤗`,
+    ];
+    msgs.push(locLines[Math.floor(Math.random() * locLines.length)]);
+  }
+
+  // ===== 基于工作的切入 =====
+  if (work) {
+    const workLines = [
+      `Saw you're at ${work} — how is it over there? I've been curious about that place 🤔`,
+      `${work}! That's awesome. What's the vibe like there? 😄`,
+      `I noticed you're connected to ${work} — I've heard interesting things about it!`,
+      `Hey! ${work} caught my eye. Are you enjoying it there? 🙃`,
+      `You at ${work}? No way, I know someone who used to work there. Small world!`,
+      `Random but — how's life at ${work}? Always been curious 🤗`,
+    ];
+    msgs.push(workLines[Math.floor(Math.random() * workLines.length)]);
+  }
+
+  // ===== 基于兴趣的切入 =====
+  if (interest && interest.length > 0) {
+    const topic = interest[0];
+    const interestLines = [
+      `I saw something about ${topic} on your profile — that's really cool! Do you follow it much? 😊`,
+      `${topic}! I'm into that too honestly. Any recommendations? 🙃`,
+      `I noticed you're into ${topic} — that's awesome! I've been getting into it lately too 👀`,
+      `Okay but your thing about ${topic} is actually super interesting ngl 😄`,
+    ];
+    msgs.push(interestLines[Math.floor(Math.random() * interestLines.length)]);
+  }
+
+  // ===== 基于教育的切入 =====
+  if (edu) {
+    const eduLines = [
+      `${edu}? I have friends from there! How was it? 😊`,
+      `Oh you went to ${edu}? Nice! I've heard good things about it 🙌`,
+    ];
+    msgs.push(eduLines[Math.floor(Math.random() * eduLines.length)]);
+  }
+
+  // ===== 通用保底（随机选） =====
+  const fallbackLines = [
     "Hey! I know this is random, but I saw your profile and something told me I'd regret it if I didn't say hi 🙃",
     "Okay this is going to sound insane, but I'm just gonna go for it. Hi 🙃",
-    "I know this is out of blue, but I've been having one of those weeks where you just feel like taking a chance. So... hi 😊",
-    "This is super random but your profile caught my attention. Thought I'd say hello 👋",
     "I promise I'm not a bot 😂 just someone who saw your profile and thought you seemed cool",
     "I normally don't message strangers on here, but your vibe seems worth the risk. Hi 🙋‍♂️",
+    "Honestly? I liked your vibe. Your profile gave off normal-human-energy 😂",
     "I was just scrolling and your profile made me smile. So here I am saying hi 😄",
-    "Honestly? I liked your vibe. Your profile gave off normal-human-energy which is surprisingly rare 😂",
-    "I'm fully aware this is random. But hey, the best things happen when you take a chance, right? 🤷‍♂️",
-    "Okay I'll be real — I saw your profile and I just had to say hi. Hope your day is going well ✨",
-    "Random message alert 🚨 But I figured why not. You seem like an interesting person 😊",
-    "This is me taking a shot in the dark. You look like someone worth knowing. Hi 👋",
-    "I'm going to blame this on impulsiveness but I saw your profile and thought you look friendly. So... hi 😄",
-    "I know messaging strangers is weird, but I figured what's the worst that could happen? 😅",
+    "Random message alert 🚨 You seem like an interesting person 😊",
     "Life's too short to pass up the chance to meet cool people. So here I am, saying hi 🫶",
   ];
 
-  // 如果目标为女性，混入几条更柔和的
-  const femalePool = [
-    "Hey! I was scrolling and your profile caught my eye. Thought I'd take a chance and say hi 😊",
-  ];
-
-  // 有工作经历时，混入几条职场相关（但不具体提公司名）
-  if (data.work) {
-    pool.push(
-      "Hey! I saw your profile and noticed you're working too. Just thought I'd say hi 🫡",
-      "Working adult solidarity ✊ Saw your profile and thought you seem cool, hi 😄",
-    );
-  }
-
-  // 选 6 条（女性目标时混入柔和版）
-  let selected = [];
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  selected = shuffled.slice(0, 4);
-
-  if (isFemale) {
-    const extra = [...femalePool].sort(() => Math.random() - 0.5).slice(0, 2);
-    selected = [...selected, ...extra];
-  }
-
-  // 补充到6条
-  while (selected.length < 6) {
-    const extra = [...pool].sort(() => Math.random() - 0.5).slice(0, 1);
-    selected.push(extra[0]);
+  // 混入 2 条通用话术, 再加几条保底
+  for (let i = 0; i < 2; i++) {
+    msgs.push(fallbackLines[Math.floor(Math.random() * fallbackLines.length)]);
   }
 
   // 去重
-  selected = [...new Set(selected)].slice(0, 6);
+  const unique = [...new Set(msgs)];
 
-  // 标注风格（随机分配）
-  const styleLabels = ['💬', '😏', '⚡', '🎐', '🙃', '✨'];
-  return selected.map((text, i) => ({
-    text,
-    style: styleLabels[i % styleLabels.length],
-  }));
+  // 如果不够 5 条, 补充到 5
+  while (unique.length < 5) {
+    unique.push(fallbackLines[Math.floor(Math.random() * fallbackLines.length)]);
+  }
+
+  return unique.slice(0, 6).map((text) => {
+    // 自动检测话术基于什么信息, 打标签
+    let style = '💬 通用';
+    if (loc && text.toLowerCase().includes(loc.toLowerCase().slice(0, 5))) style = '📍 位置';
+    else if (work && text.includes(work.slice(0, 8))) style = '💼 工作';
+    else if (interest && text.toLowerCase().includes(interest[0].toLowerCase().slice(0, 4))) style = '🏷️ 兴趣';
+    else if (edu && text.includes(edu.slice(0, 6))) style = '🎓 教育';
+    return { text, style };
+  });
 }
 
 
@@ -791,7 +818,7 @@ function tabIce(data) {
   const ice = data.icebreakers || [];
   if (!ice.length) return `<div class="emp"><span>🎯</span>暂无破冰话术<br><small style="color:#8AB4D6">需要先采集目标资料</small></div>`;
 
-  const styleEmojis = { '💬':'随性', '😏':'俏皮', '⚡':'直球', '🎐':'含蓄', '🙃':'自然', '✨':'温柔' };
+  // style 格式: '📍 位置' / '💼 工作' / '💬 通用' 等, 直接使用
 
   let h = `<div class="card" style="background:#E8F4FD;border-color:#87CEEB;">
     <h3 style="color:#5BA3C9">🎯 破冰话术</h3>
@@ -800,7 +827,7 @@ function tabIce(data) {
   ice.forEach((item, i) => {
     const msg = item.text || item;
     const style = item.style || '';
-    const styleLabel = styleEmojis[style] ? style + ' ' + styleEmojis[style] : style;
+    const styleLabel = style;
     h += `<div style="background:white;border:1px solid #D4EDFB;border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer;" class="v6-copy-ice" data-ice="${escHtml(msg)}">
       <div style="display:flex;align-items:flex-start;gap:8px;">
         <span style="color:#87CEEB;font-weight:700;font-size:12px;">${styleLabel}</span>
