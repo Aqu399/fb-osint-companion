@@ -657,62 +657,98 @@ const Extractor = {
 //  🎯 智能破冰话术引擎
 // ============================================================
 function generateIcebreakers(data) {
-  const msgs = [];
-  const name = data.name || '你';
+  // 生成多组不同风格的话术
+  const styles = {
+    casual: [],   // 随性自然
+    direct: [],   // 直球
+    playful: [],  // 俏皮
+    subtle: [],   // 含蓄（不暴露信息源）
+  };
 
-  // 1. 基于位置
-  if (data.location) {
-    const loc = data.location.split(',')[0].trim();
-    msgs.push(`嗨～看到你也在${loc}，好巧！交个朋友？😊`);
-    msgs.push(`Hey! 我也在${loc}附近活动，感觉挺有缘的 🙃`);
+  const loc = data.location ? data.location.split(',')[0].trim() : null;
+  const work = data.work ? data.work.split(';')[0].trim() : null;
+  const edu = data.education ? data.education.split(';')[0].trim() : null;
+  const interest = data.interestWords && data.interestWords.length > 0 ? data.interestWords[0] : null;
+  const isFemale = data.gender && (data.gender.toLowerCase().includes('女性') || data.gender.toLowerCase().includes('female') || data.gender === '女');
+
+  // ===== 随性自然风 =====
+  if (loc) {
+    styles.casual.push(`Hey, 我也在${loc}附近，感觉这边圈子不大，指不定哪天能碰上 😄`);
+    styles.casual.push(`刷到你主页，${loc}的小伙伴～hi 一下 🙋‍♂️`);
+  }
+  if (work) {
+    styles.casual.push(`刷到你在${work}，冒昧问一句，那地方工作氛围怎么样？最近在考虑动一动 🤔`);
+  }
+  if (interest) {
+    styles.casual.push(`刷到你也喜欢${interest}，最近有入手什么新的吗？👀`);
+  }
+  if (edu) {
+    styles.casual.push(`${edu}出来的？校友你好 🙌`);
   }
 
-  // 2. 基于工作
-  if (data.work) {
-    const w = data.work.split(';')[0].trim();
-    msgs.push(`你在${w}工作？感觉好酷！请问那边工作氛围怎么样？🤔`);
-    msgs.push(`冒昧问一下，在${w}工作是什么样的体验？我一直挺好奇的 🤗`);
+  // ===== 直球风 =====
+  if (loc && isFemale) {
+    styles.direct.push(`Okay我承认有点突然，但看到你是${loc}的，想认识一下。不行当我没说 😂`);
+  }
+  if (work) {
+    styles.direct.push(`${work}！这工作有意思，你是做什么岗位的？`);
+  }
+  if (interest) {
+    styles.direct.push(`你玩${interest}的吗？有机会交流一下！`);
+  }
+  if (loc && work) {
+    styles.direct.push(`${loc} + ${work}，你这配置有意思，交个朋友？`);
   }
 
-  // 3. 基于教育
-  if (data.education) {
-    const e = data.education.split(';')[0].trim();
-    msgs.push(`你是${e}毕业的？校友诶！好巧 🙌`);
+  // ===== 俏皮风 =====
+  if (loc) {
+    styles.playful.push(`哈囉${loc}的朋友，我是隔壁路过的，进来打个卡 🙃`);
+  }
+  if (work) {
+    styles.playful.push(`我掐指一算，你在${work}上班对不对？不准的话我请你喝咖啡 😂`);
+  }
+  styles.playful.push(`我发誓我不是机器人！只是刚好刷到你，觉得应该打个招呼而已 🤖‍♂️`);
+
+  // ===== 含蓄风（不露信息） =====
+  styles.subtle.push(`Hi! 觉得你的页面很有趣，冒昧打个招呼～`);
+  if (interest) {
+    styles.subtle.push(`无意中刷到你，发现我们有共同的爱好，来say hi 😊`);
+  }
+  styles.subtle.push(`其实我平时不太在FB上主动找人聊天的，但你给我的感觉挺特别的，所以…hi🙂`);
+  if (loc) {
+    styles.subtle.push(`世界真小，居然刷到同在${loc}的人！`);
   }
 
-  // 4. 基于兴趣词
-  if (data.interestWords && data.interestWords.length > 0) {
-    const w = data.interestWords[0];
-    if (!msgs.some(m => m.includes(w))) {
-      msgs.push(`看到你也喜欢${w}！我也是，要不要聊聊？😄`);
-    }
-  }
-
-  // 5. 基于生日/年龄
-  if (data.birthday) {
-    const ageMatch = data.birthday.match(/\d{4}/);
-    if (ageMatch) {
-      const age = new Date().getFullYear() - parseInt(ageMatch[0]);
-      if (age >= 18 && age <= 35) {
-        msgs.push(`Hey! 看起来我们年纪差不多，想认识一下～🙋‍♂️`);
+  // 每组选1-2条
+  const result = [];
+  for (const style of ['casual', 'direct', 'playful', 'subtle']) {
+    const pool = styles[style];
+    if (pool.length > 0) {
+      // 随机选一条
+      result.push(pool[Math.floor(Math.random() * pool.length)]);
+      if (pool.length > 1 && result.length < 8) {
+        result.push(pool[Math.floor(Math.random() * pool.length)]);
       }
     }
+    if (result.length >= 6) break;
   }
 
-  // 6. 基于性别 + 通用
-  const isFemale = data.gender && (data.gender.toLowerCase().includes('女性') || data.gender.toLowerCase().includes('female') || data.gender === '女');
-  if (isFemale && data.location) {
-    msgs.push(`嗨～我看到你在${data.location.split(',')[0].trim()}，感觉你很有趣的样子，想认识你 😊`);
+  // 去重 + 保证至少有一条通用保底
+  const unique = [...new Set(result)];
+  if (unique.length === 0) {
+    unique.push("Hi! 看到你的主页感觉你很有趣，想认识一下 🙃");
+    unique.push("我平时一般不随便加人的，但你的主页看起来很有意思 😄");
   }
 
-  // 7. 通用保底
-  if (msgs.length < 2) {
-    msgs.push(`Hey! 我承认这有点突然，但看到你的主页感觉你很有趣，想认识一下 🙃`);
-    msgs.push(`我平时一般不随便加人的，但你的主页看起来很有意思，所以打个招呼 😄`);
-  }
-
-  // 去重 + 限制5条
-  return [...new Set(msgs)].slice(0, 5);
+  return unique.slice(0, 6).map(msg => {
+    //给每条话术标注风格标签
+    const tagMap = { casual: '随性', direct: '直球', playful: '俏皮', subtle: '含蓄' };
+    let tag = '';
+    for (const [k, v] of Object.entries(tagMap)) {
+      if (styles[k].includes(msg)) { tag = v; break; }
+    }
+    return { text: msg, style: tag };
+  });
 }
 
 
@@ -785,15 +821,21 @@ function tabIce(data) {
   const ice = data.icebreakers || [];
   if (!ice.length) return `<div class="emp"><span>🎯</span>暂无破冰话术<br><small style="color:#8AB4D6">需要先采集目标资料</small></div>`;
 
+  const styleLabels = { casual: '💬 随性', direct: '⚡ 直球', playful: '😏 俏皮', subtle: '🎐 含蓄' };
+
   let h = `<div class="card" style="background:#E8F4FD;border-color:#87CEEB;">
-    <h3 style="color:#5BA3C9">🎯 智能破冰话术</h3>
-    <div style="font-size:11px;color:#8AB4D6;margin-bottom:10px;">基于目标画像自动生成，点击复制直接使用</div>`;
-  ice.forEach((msg, i) => {
+    <h3 style="color:#5BA3C9">🎯 破冰话术</h3>
+    <div style="font-size:11px;color:#8AB4D6;margin-bottom:10px;">多种风格，点击复制</div>
+    <button id="v6-regen-ice" style="background:#87CEEB;border:none;border-radius:8px;color:white;padding:6px 12px;font-size:11px;cursor:pointer;font-family:inherit;margin-bottom:10px;">🔄 换一批</button>`;
+  ice.forEach((item, i) => {
+    const msg = item.text || item;
+    const style = item.style || '';
+    const styleLabel = styleLabels[style] || '';
     h += `<div style="background:white;border:1px solid #D4EDFB;border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer;" class="v6-copy-ice" data-ice="${escHtml(msg)}">
       <div style="display:flex;align-items:flex-start;gap:8px;">
-        <span style="color:#87CEEB;font-weight:700;font-size:13px;">#${i+1}</span>
+        <span style="color:#87CEEB;font-weight:700;font-size:12px;">${styleLabel}</span>
         <span style="flex:1;color:#3A5A7A;font-size:12px;line-height:1.5;">${escHtml(msg)}</span>
-        <span style="color:#D4EDFB;font-size:11px;flex-shrink:0;">📋 复制</span>
+        <span style="color:#D4EDFB;font-size:11px;flex-shrink:0;">📋</span>
       </div>
     </div>`;
   });
@@ -1104,6 +1146,12 @@ function bindEvents(data) {
         document.getElementById('v6-content').innerHTML = tabSaved();
         setStatus('🗑️ 已删除');
       }
+      return;
+    }
+    // Icebreaker: regenerate
+    if (e.target.id === 'v6-regen-ice' || e.target.closest('#v6-regen-ice')) {
+      data.icebreakers = generateIcebreakers(data);
+      document.getElementById('v6-content').innerHTML = tabIce(data);
       return;
     }
     // Icebreaker: copy text
