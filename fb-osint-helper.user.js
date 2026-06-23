@@ -27,8 +27,6 @@
   //  🎀 样式
   // ============================================================
   const styles = `
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700&display=swap');
-
     #fb-osint-panel {
       position: fixed; bottom: 20px; right: 20px;
       width: 430px; max-height: 92vh;
@@ -38,7 +36,7 @@
       border-radius: 18px;
       box-shadow: 0 8px 32px rgba(135,206,235,0.3);
       z-index: 999999;
-      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: 13px;
       overflow: hidden;
       display: flex; flex-direction: column;
@@ -234,7 +232,7 @@
       border-radius: 18px;
       box-shadow: 0 8px 32px rgba(135,206,235,0.3);
       z-index: 999998;
-      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: 12px;
       display: none; flex-direction: column;
     }
@@ -317,7 +315,7 @@
       padding: 24px 36px; z-index: 9999999;
       text-align: center; min-width: 320px;
       box-shadow: 0 8px 32px rgba(135,206,235,0.3);
-      font-family: 'Noto Sans SC', sans-serif;
+      font-family: sans-serif;
     }
     #fb-osint-scanner-progress .sp-title { font-weight: 700; font-size: 15px; margin-bottom: 8px; }
     #fb-osint-scanner-progress .sp-count { font-size: 12px; color: #8AB4D6; margin-bottom: 8px; }
@@ -336,7 +334,7 @@
     .fb-osint-popup-scanner .ps-box {
       background: #F0F8FF; color: #3A5A7A; border: 2px solid #87CEEB; border-radius: 18px;
       padding: 24px; max-width: 400px; width: 90%; max-height: 80vh; overflow-y: auto;
-      font-family: 'Noto Sans SC', sans-serif;
+      font-family: sans-serif;
     }
     .fb-osint-popup-scanner .ps-box .ps-title { font-weight: 700; margin-bottom: 12px; }
     .fb-osint-popup-scanner .ps-box .ps-item { font-size: 12px; padding: 4px 8px; background: white; border-radius: 8px; margin-bottom: 3px; }
