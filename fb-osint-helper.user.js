@@ -17,6 +17,7 @@
 // @grant        GM_deleteValue
 // @grant        GM_listValues
 // @grant        GM_xmlhttpRequest
+// @grant        GM_info
 // @run-at       document-end
 // ==/UserScript==
 
@@ -1316,7 +1317,59 @@ function autoTrigger() {
 // ============================================================
 //  🏁 Init
 // ============================================================
+// ============================================================
+//  🔄 自动更新检测
+// ============================================================
+let updateAvailable = false;
+
+function checkUpdate() {
+  GM_xmlhttpRequest({
+    method: 'GET',
+    url: 'https://raw.githubusercontent.com/Aqu399/fb-osint-companion/main/fb-osint-helper.user.js',
+    onload: function(res) {
+      try {
+        const verMatch = res.responseText.match(/@version\s+([\d.]+)/);
+        if (verMatch) {
+          const latestVer = verMatch[1];
+          const currentVer = GM_info.script.version || '0';
+          if (compareVersions(latestVer, currentVer) > 0) {
+            updateAvailable = true;
+            console.log('🎯 发现新版本: v' + latestVer + ' (当前: v' + currentVer + ')');
+          }
+        }
+      } catch(e) {}
+    }
+  });
+}
+
+function compareVersions(a, b) {
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const na = pa[i] || 0, nb = pb[i] || 0;
+    if (na > nb) return 1;
+    if (na < nb) return -1;
+  }
+  return 0;
+}
+
+function updateBanner() {
+  if (!updateAvailable) return '';
+  return '<div style="background:#FFF3CD;border:1px solid #FFC107;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:11px;color:#856404;text-align:center;">📦 发现新版本！<a href="https://github.com/Aqu399/fb-osint-companion/raw/main/fb-osint-helper.user.js" target="_blank" style="color:#5BA3C9;font-weight:600;">点击更新 →</a></div>';
+}
+
+// patch htmlPanel to include update banner
+const _origHtmlPane2 = htmlPanel;
+htmlPanel = function(data) {
+  let out = _origHtmlPane2(data);
+  if (updateAvailable) {
+    out = out.replace('<div class="body">', '<div class="body">' + updateBanner());
+  }
+  return out;
+};
+
 function init() {
+  checkUpdate();
   setTimeout(createFloatBtn, 1500);
   setTimeout(autoTrigger, 2500);
 
